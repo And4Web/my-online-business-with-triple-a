@@ -2,7 +2,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-20 text-white">
       
-<nav className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+{/* <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4">
   <a href="/" className="shrink-0 text-3xl font-extrabold tracking-tight">
     Nexora<span className="text-blue-400">.</span>
   </a>
@@ -11,7 +11,7 @@ export default function Home() {
     <a href="/" className="transition hover:text-blue-400">
       Home
     </a>
-    <a href="#projects" className="transition hover:text-blue-400">
+    <a href="/projects" className="transition hover:text-blue-400">
       Projects
     </a>
     <a href="#about" className="transition hover:text-blue-400">
@@ -20,12 +20,12 @@ export default function Home() {
   </div>
 
   <a
-    href="#projects"
+    href="/projects"
     className="shrink-0 rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold transition hover:border-blue-400 hover:bg-slate-900"
   >
     Explore Projects <span aria-hidden="true">→</span>
   </a>
-</nav>
+</nav> */}
 
 
       {/* Hero Section starts*/}
@@ -55,7 +55,7 @@ export default function Home() {
 
   <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
     <a
-      href="#projects"
+      href="/projects"
       className="rounded-xl bg-blue-500 px-8 py-4 text-base font-bold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400"
     >
       Explore Projects →
@@ -187,7 +187,7 @@ export default function Home() {
     </p>
 
     <a
-      href="#projects"
+      href="/projects"
       className="mt-8 inline-flex rounded-xl bg-blue-500 px-6 py-3 font-semibold text-white transition hover:bg-blue-400"
     >
       Explore Our Projects →
@@ -202,7 +202,7 @@ export default function Home() {
     {/* Footer section starts */}
 
     
-<footer className="border-t border-slate-800 bg-slate-950">
+{/* <footer className="border-t border-slate-800 bg-slate-950">
   <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <a href="/" className="text-2xl font-extrabold tracking-tight">
@@ -229,7 +229,7 @@ export default function Home() {
       © 2026 Nexora. All rights reserved.
     </p>
   </div>
-</footer>
+</footer> */}
 
 
     {/* Footer section ends */}

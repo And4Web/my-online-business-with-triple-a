@@ -18,25 +18,59 @@ const categories = [
 export default function ProjectsPage() {
   const [activeCategory, setActiveCategory] = useState("All Projects");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState("default");
 
   
-const filteredProjects = projects.filter((project) => {
-  const matchesCategory =
-    activeCategory === "All Projects" ||
-    project.category === activeCategory;
+// const filteredProjects = projects.filter((project) => {
+//   const matchesCategory =
+//     activeCategory === "All Projects" ||
+//     project.category === activeCategory;
 
-  const searchText = searchQuery.trim().toLowerCase();
+//   const searchText = searchQuery.trim().toLowerCase();
 
-  const matchesSearch =
-    project.title.toLowerCase().includes(searchText) ||
-    project.category.toLowerCase().includes(searchText) ||
-    project.description.toLowerCase().includes(searchText) ||
-    project.technologies.some((technology) =>
-  technology.toLowerCase().includes(searchQuery.toLowerCase())
-);
+//   const matchesSearch =
+//     project.title.toLowerCase().includes(searchText) ||
+//     project.category.toLowerCase().includes(searchText) ||
+//     project.description.toLowerCase().includes(searchText) ||
+//     project.technologies.some((technology) =>
+//   technology.toLowerCase().includes(searchQuery.toLowerCase())
+// );
 
-  return matchesCategory && matchesSearch;
-});
+//   return matchesCategory && matchesSearch;
+// });
+
+
+
+const filteredProjects = projects
+  .filter((project) => {
+    const matchesCategory =
+      activeCategory === "All Projects" ||
+      project.category === activeCategory;
+
+    const searchText = searchQuery.toLowerCase();
+
+    const matchesSearch =
+      project.title.toLowerCase().includes(searchText) ||
+      project.category.toLowerCase().includes(searchText) ||
+      project.description.toLowerCase().includes(searchText) ||
+      project.technologies.some((technology) =>
+        technology.toLowerCase().includes(searchText)
+      );
+
+    return matchesCategory && matchesSearch;
+  })
+  .sort((a, b) => {
+    if (sortOrder === "price-low") {
+      return a.price - b.price;
+    }
+
+    if (sortOrder === "price-high") {
+      return b.price - a.price;
+    }
+
+    return 0;
+  });
+
 
 
   return (
@@ -76,6 +110,8 @@ const filteredProjects = projects.filter((project) => {
       ⌕
     </span>
 
+    
+
     <input
       id="project-search"
       type="search"
@@ -84,10 +120,10 @@ const filteredProjects = projects.filter((project) => {
       placeholder="Search projects, technologies..."
       className="w-full bg-transparent text-base text-white outline-none placeholder:text-slate-500"
     />
+    
   </div>
+  
 </div>
-
-
 
 
         <div className="mt-12 flex flex-wrap justify-center gap-3">
@@ -121,6 +157,28 @@ const filteredProjects = projects.filter((project) => {
             Sample prices under $49
           </p>
         </div>
+
+        
+<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+  <label
+    htmlFor="sortOrder"
+    className="text-sm font-medium text-slate-300"
+  >
+    Sort by price
+  </label>
+
+  <select
+    id="sortOrder"
+    value={sortOrder}
+    onChange={(event) => setSortOrder(event.target.value)}
+    className="rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-blue-500"
+  >
+    <option value="default">Default order</option>
+    <option value="price-low">Price: Low to High</option>
+    <option value="price-high">Price: High to Low</option>
+  </select>
+</div>
+
 
         {filteredProjects.length > 0 ? (
           <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">

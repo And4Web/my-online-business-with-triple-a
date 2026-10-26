@@ -159,6 +159,7 @@ const filteredProjects = projects
         </div>
 
         
+    
 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
   <label
     htmlFor="sortOrder"
@@ -178,6 +179,20 @@ const filteredProjects = projects
     <option value="price-high">Price: High to Low</option>
   </select>
 </div>
+
+
+<button
+  type="button"
+  onClick={() => {
+    setSearchQuery("");
+    setActiveCategory("All Projects");
+    setSortOrder("default");
+  }}
+  className="rounded-lg border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:border-blue-500 hover:text-blue-400"
+>
+  Clear Filters
+</button>
+
 
 
         {filteredProjects.length > 0 ? (

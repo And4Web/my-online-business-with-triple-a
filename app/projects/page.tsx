@@ -1,41 +1,12 @@
-
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
 
-const projects = [
-  {
-    category: "E-commerce",
-    title: "E-commerce Platform",
-    description:
-      "A starting point for building an online store with product listings, a shopping cart, and checkout.",
-    technologies: ["Next.js", "MongoDB", "TypeScript"],
-    price: 39,
-    color: "blue",
-    href: "/projects/e-commerce-platform",
-  },
-  {
-    category: "Communication",
-    title: "Real-Time Chat App",
-    description:
-      "A messaging application starter designed for live conversations and chat rooms.",
-    technologies: ["React", "Socket.IO", "Node.js"],
-    price: 29,
-    color: "purple",
-    href: "",
-  },
-  {
-    category: "Productivity",
-    title: "Admin Dashboard",
-    description:
-      "A dashboard starter for organizing business data, metrics, and management workflows.",
-    technologies: ["Next.js", "TypeScript", "Tailwind"],
-    price: 19,
-    color: "cyan",
-    href: "",
-  },
-];
+import ProjectCard from "../components/ProjectCard";
+
+import { projects } from "../lib/projects";
+
 
 const categories = [
   "All Projects",
@@ -61,8 +32,8 @@ const filteredProjects = projects.filter((project) => {
     project.category.toLowerCase().includes(searchText) ||
     project.description.toLowerCase().includes(searchText) ||
     project.technologies.some((technology) =>
-      technology.toLowerCase().includes(searchText),
-    );
+  technology.toLowerCase().includes(searchQuery.toLowerCase())
+);
 
   return matchesCategory && matchesSearch;
 });
@@ -154,66 +125,8 @@ const filteredProjects = projects.filter((project) => {
         {filteredProjects.length > 0 ? (
           <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredProjects.map((project) => (
-              <article
-                key={project.title}
-                className="flex flex-col rounded-2xl border border-slate-800 bg-slate-900/70 p-6 transition duration-300 hover:-translate-y-1 hover:border-blue-500/50"
-              >
-                <span
-                  className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
-                    project.color === "blue"
-                      ? "bg-blue-500/10 text-blue-400"
-                      : project.color === "purple"
-                        ? "bg-purple-500/10 text-purple-400"
-                        : "bg-cyan-500/10 text-cyan-400"
-                  }`}
-                >
-                  {project.category}
-                </span>
-
-                <h2 className="mt-5 text-xl font-bold">
-                  {project.title}
-                </h2>
-
-                <p className="mt-3 flex-1 text-sm leading-6 text-slate-400">
-                  {project.description}
-                </p>
-
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {project.technologies.map((technology) => (
-                    <span
-                      key={technology}
-                      className="rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-300"
-                    >
-                      {technology}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mt-7 flex items-center justify-between border-t border-slate-800 pt-5">
-                  <div>
-                    <p className="text-xs text-slate-500">
-                      Sample price
-                    </p>
-                    <p className="mt-1 text-2xl font-bold">
-                      ${project.price}
-                    </p>
-                  </div>
-
-                  {project.href ? (
-                    <Link
-                      href={project.href}
-                      className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-400"
-                    >
-                      View Details →
-                    </Link>
-                  ) : (
-                    <span className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-400">
-                      Coming Soon
-                    </span>
-                  )}
-                </div>
-              </article>
-            ))}
+  <ProjectCard key={project.slug} project={project} />
+))}
           </div>
         ) : (
           <p className="mt-10 text-center text-slate-400">

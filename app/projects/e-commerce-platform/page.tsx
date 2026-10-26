@@ -1,124 +1,116 @@
 
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { projects } from "../../lib/projects";
 
-const features = [
-  "Product listing and product details",
-  "Shopping cart foundation",
-  "Responsive storefront layout",
-  "MongoDB integration preparation",
-  "TypeScript-based project structure",
-  "Checkout flow preparation",
-];
+export default function EcommerceProjectPage() {
+  const project = projects.find(
+    (item) => item.slug === "e-commerce-platform"
+  );
 
-export default function EcommerceProductPage() {
+  if (!project) {
+    notFound();
+  }
+
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-12 text-white sm:py-16">
+    <main className="min-h-screen bg-slate-950 px-4 py-16 text-white sm:py-24">
       <div className="mx-auto max-w-6xl">
         <Link
           href="/projects"
-          className="text-sm text-slate-400 transition hover:text-blue-400"
+          className="text-sm font-medium text-blue-400 transition hover:text-blue-300"
         >
           ← Back to Projects
         </Link>
 
-        <div className="mt-10 grid gap-10 lg:grid-cols-2 lg:gap-16">
-          <div>
-            <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-blue-500/20 via-slate-900 to-purple-500/20">
-              <div className="text-center">
-                <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl border border-blue-400/30 bg-slate-950/70 text-5xl shadow-2xl shadow-blue-500/10">
-                  🛍️
-                </div>
-                <p className="mt-5 text-sm font-medium text-slate-400">
-                  Nexora Starter Project
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-              <h2 className="text-lg font-bold">Technologies</h2>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {["Next.js", "TypeScript", "MongoDB", "Tailwind CSS"].map(
-                  (technology) => (
-                    <span
-                      key={technology}
-                      className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-300"
-                    >
-                      {technology}
-                    </span>
-                  ),
-                )}
-              </div>
-
-              <p className="mt-4 text-sm leading-6 text-slate-400">
-                This is our planned technology stack for the starter.
-                We will implement and verify its actual features before
-                offering it for sale.
+        <div className="mt-8 grid gap-10 lg:grid-cols-2 lg:gap-16">
+          <div className="flex min-h-[320px] items-center justify-center rounded-3xl border border-slate-800 bg-gradient-to-br from-blue-500/20 to-slate-900 sm:min-h-[440px]">
+            <div className="text-center">
+              <div className="text-8xl">🛍️</div>
+              <p className="mt-5 text-sm font-medium text-slate-400">
+                Project Preview
               </p>
             </div>
           </div>
 
-          <div>
-            <span className="inline-flex rounded-full bg-blue-500/10 px-3 py-1 text-sm font-semibold text-blue-400">
-              E-commerce
+          <div className="flex flex-col justify-center">
+            <span className="w-fit rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-sm font-medium text-blue-300">
+              {project.category}
             </span>
 
             <h1 className="mt-5 text-4xl font-extrabold tracking-tight sm:text-5xl">
-              E-commerce Platform
+              {project.title}
             </h1>
 
             <p className="mt-5 text-lg leading-8 text-slate-400">
-              Start building your online store with a structured
-              storefront foundation designed to save development time.
+              {project.description}
             </p>
 
-            <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-              <p className="text-sm text-slate-400">Planned launch price</p>
+            <div className="mt-7">
+              <p className="text-sm font-medium text-slate-400">
+                Planned technology stack
+              </p>
 
-              <div className="mt-2 flex items-baseline gap-3">
-                <span className="text-4xl font-extrabold">$39</span>
-                <span className="text-sm text-slate-500">USD</span>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {project.technologies.map((technology) => (
+                  <span
+                    key={technology}
+                    className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200"
+                  >
+                    {technology}
+                  </span>
+                ))}
               </div>
+            </div>
+
+            <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+              <p className="text-sm text-slate-400">
+                Planned listing price
+              </p>
+
+              <p className="mt-2 text-4xl font-extrabold">
+                ${project.price}
+              </p>
 
               <button
                 type="button"
                 disabled
-                className="mt-6 w-full cursor-not-allowed rounded-xl bg-blue-500/50 px-6 py-4 font-bold text-white"
+                className="mt-5 w-full cursor-not-allowed rounded-xl bg-blue-500/50 px-6 py-4 font-bold text-white"
               >
                 Purchases Coming Soon
               </button>
 
               <p className="mt-3 text-center text-xs leading-5 text-slate-500">
-                Checkout will be enabled after the product and payment
-                system are ready.
-              </p>
-            </div>
-
-            <div className="mt-10">
-              <h2 className="text-xl font-bold">What&apos;s planned?</h2>
-
-              <ul className="mt-5 space-y-4">
-                {features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-3">
-                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-sm text-blue-400">
-                      ✓
-                    </span>
-                    <span className="text-sm leading-6 text-slate-300">
-                      {feature}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="mt-10 border-t border-slate-800 pt-6">
-              <p className="text-sm leading-6 text-slate-400">
-                Need help getting your project online? Optional
-                deployment assistance is part of our planned service.
+                Purchasing and downloads are not available yet.
               </p>
             </div>
           </div>
         </div>
+
+        <section className="mt-16 border-t border-slate-800 pt-10">
+          <h2 className="text-2xl font-bold sm:text-3xl">
+            Planned project highlights
+          </h2>
+
+          <p className="mt-3 max-w-2xl leading-7 text-slate-400">
+            These are intended features for this project. We will
+            verify and implement them before the product is offered
+            for sale.
+          </p>
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {project.features.map((feature) => (
+              <div
+                key={feature}
+                className="flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-900/50 p-5"
+              >
+                <span className="text-blue-400">✓</span>
+                <p className="text-sm leading-6 text-slate-300">
+                  {feature}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </main>
   );

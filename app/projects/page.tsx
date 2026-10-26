@@ -178,9 +178,6 @@ const filteredProjects = projects
     <option value="price-low">Price: Low to High</option>
     <option value="price-high">Price: High to Low</option>
   </select>
-</div>
-
-
 <button
   type="button"
   onClick={() => {
@@ -192,6 +189,9 @@ const filteredProjects = projects
 >
   Clear Filters
 </button>
+</div>
+
+
 
 
 

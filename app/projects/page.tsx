@@ -56,10 +56,7 @@ export default function ProjectsPage() {
         const databaseProjects: Project[] = data.products.map(
           (product) => ({
             ...product,
-            href:
-              product.slug === "e-commerce-platform"
-                ? `/projects/${product.slug}`
-                : "",
+            href: `/projects/${product.slug}`,
           })
         );
 

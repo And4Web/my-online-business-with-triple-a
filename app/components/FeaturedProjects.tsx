@@ -30,10 +30,7 @@ export default async function FeaturedProjects() {
       price: product.price,
       color: product.color,
       features: product.features,
-      href:
-        product.slug === "e-commerce-platform"
-          ? `/projects/${product.slug}`
-          : "",
+      href: `/projects/${product.slug}`,
     }));
   } catch (error) {
     console.error("Homepage products failed to load:", error);

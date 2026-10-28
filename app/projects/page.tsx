@@ -1,12 +1,22 @@
+
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import ProjectCard from "../components/ProjectCard";
+import type { Project } from "../lib/projects";
 
-import { projects } from "../lib/projects";
+type ApiProduct = Omit<Project, "href"> & {
+  status: "draft" | "coming-soon" | "active";
+};
 
+type ProductsApiResponse = {
+  ok: boolean;
+  count: number;
+  products: ApiProduct[];
+  message?: string;
+};
 
 const categories = [
   "All Projects",
@@ -16,62 +26,98 @@ const categories = [
 ];
 
 export default function ProjectsPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
   const [activeCategory, setActiveCategory] = useState("All Projects");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("default");
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  
-// const filteredProjects = projects.filter((project) => {
-//   const matchesCategory =
-//     activeCategory === "All Projects" ||
-//     project.category === activeCategory;
+  useEffect(() => {
+    const controller = new AbortController();
 
-//   const searchText = searchQuery.trim().toLowerCase();
+    async function loadProducts() {
+      try {
+        setIsLoading(true);
+        setErrorMessage("");
 
-//   const matchesSearch =
-//     project.title.toLowerCase().includes(searchText) ||
-//     project.category.toLowerCase().includes(searchText) ||
-//     project.description.toLowerCase().includes(searchText) ||
-//     project.technologies.some((technology) =>
-//   technology.toLowerCase().includes(searchQuery.toLowerCase())
-// );
+        const response = await fetch("/api/products", {
+          signal: controller.signal,
+        });
 
-//   return matchesCategory && matchesSearch;
-// });
+        const data: ProductsApiResponse = await response.json();
 
+        if (!response.ok || !data.ok) {
+          throw new Error(
+            data.message || "Unable to load projects."
+          );
+        }
 
+        const databaseProjects: Project[] = data.products.map(
+          (product) => ({
+            ...product,
+            href:
+              product.slug === "e-commerce-platform"
+                ? `/projects/${product.slug}`
+                : "",
+          })
+        );
 
-const filteredProjects = projects
-  .filter((project) => {
-    const matchesCategory =
-      activeCategory === "All Projects" ||
-      project.category === activeCategory;
+        setProjects(databaseProjects);
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.name === "AbortError"
+        ) {
+          return;
+        }
 
-    const searchText = searchQuery.toLowerCase();
+        console.error("Failed to load projects:", error);
 
-    const matchesSearch =
-      project.title.toLowerCase().includes(searchText) ||
-      project.category.toLowerCase().includes(searchText) ||
-      project.description.toLowerCase().includes(searchText) ||
-      project.technologies.some((technology) =>
-        technology.toLowerCase().includes(searchText)
-      );
-
-    return matchesCategory && matchesSearch;
-  })
-  .sort((a, b) => {
-    if (sortOrder === "price-low") {
-      return a.price - b.price;
+        setErrorMessage(
+          "We couldn't load projects right now. Please try refreshing the page."
+        );
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
+      }
     }
 
-    if (sortOrder === "price-high") {
-      return b.price - a.price;
-    }
+    void loadProducts();
 
-    return 0;
-  });
+    return () => controller.abort();
+  }, []);
 
+  const filteredProjects = projects
+    .filter((project) => {
+      const matchesCategory =
+        activeCategory === "All Projects" ||
+        project.category === activeCategory;
 
+      const searchText = searchQuery.trim().toLowerCase();
+
+      const matchesSearch =
+        project.title.toLowerCase().includes(searchText) ||
+        project.category.toLowerCase().includes(searchText) ||
+        project.description.toLowerCase().includes(searchText) ||
+        project.technologies.some((technology) =>
+          technology.toLowerCase().includes(searchText)
+        );
+
+      return matchesCategory && matchesSearch;
+    })
+    .sort((a, b) => {
+      if (sortOrder === "price-low") {
+        return a.price - b.price;
+      }
+
+      if (sortOrder === "price-high") {
+        return b.price - a.price;
+      }
+
+      return 0;
+    });
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-16 text-white sm:py-24">
@@ -98,33 +144,26 @@ const filteredProjects = projects
           </p>
         </div>
 
+        <div className="mx-auto mt-10 max-w-xl">
+          <label htmlFor="project-search" className="sr-only">
+            Search projects
+          </label>
 
+          <div className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 transition focus-within:border-blue-500">
+            <span aria-hidden="true" className="text-lg text-slate-400">
+              ⌕
+            </span>
 
-<div className="mx-auto mt-10 max-w-xl">
-  <label htmlFor="project-search" className="sr-only">
-    Search projects
-  </label>
-
-  <div className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 transition focus-within:border-blue-500">
-    <span aria-hidden="true" className="text-lg text-slate-400">
-      ⌕
-    </span>
-
-    
-
-    <input
-      id="project-search"
-      type="search"
-      value={searchQuery}
-      onChange={(event) => setSearchQuery(event.target.value)}
-      placeholder="Search projects, technologies..."
-      className="w-full bg-transparent text-base text-white outline-none placeholder:text-slate-500"
-    />
-    
-  </div>
-  
-</div>
-
+            <input
+              id="project-search"
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search projects, technologies..."
+              className="w-full bg-transparent text-base text-white outline-none placeholder:text-slate-500"
+            />
+          </div>
+        </div>
 
         <div className="mt-12 flex flex-wrap justify-center gap-3">
           {categories.map((category) => (
@@ -146,60 +185,72 @@ const filteredProjects = projects
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-slate-300">
-            Showing{" "}
-            <span className="font-semibold text-white">
-              {filteredProjects.length}
-            </span>{" "}
-            {filteredProjects.length === 1 ? "project" : "projects"}
+            {isLoading ? (
+              "Loading projects..."
+            ) : (
+              <>
+                Showing{" "}
+                <span className="font-semibold text-white">
+                  {filteredProjects.length}
+                </span>{" "}
+                {filteredProjects.length === 1 ? "project" : "projects"}
+              </>
+            )}
           </p>
 
           <p className="text-sm text-slate-500">
-            Sample prices under $49
+            Planned prices under $49
           </p>
         </div>
 
-        
-    
-<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-  <label
-    htmlFor="sortOrder"
-    className="text-sm font-medium text-slate-300"
-  >
-    Sort by price
-  </label>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <label
+            htmlFor="sortOrder"
+            className="text-sm font-medium text-slate-300"
+          >
+            Sort by price
+          </label>
 
-  <select
-    id="sortOrder"
-    value={sortOrder}
-    onChange={(event) => setSortOrder(event.target.value)}
-    className="rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-blue-500"
-  >
-    <option value="default">Default order</option>
-    <option value="price-low">Price: Low to High</option>
-    <option value="price-high">Price: High to Low</option>
-  </select>
-<button
-  type="button"
-  onClick={() => {
-    setSearchQuery("");
-    setActiveCategory("All Projects");
-    setSortOrder("default");
-  }}
-  className="rounded-lg border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:border-blue-500 hover:text-blue-400"
->
-  Clear Filters
-</button>
-</div>
+          <select
+            id="sortOrder"
+            value={sortOrder}
+            onChange={(event) => setSortOrder(event.target.value)}
+            className="rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-blue-500"
+          >
+            <option value="default">Default order</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+          </select>
 
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery("");
+              setActiveCategory("All Projects");
+              setSortOrder("default");
+            }}
+            className="rounded-lg border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:border-blue-500 hover:text-blue-400"
+          >
+            Clear Filters
+          </button>
+        </div>
 
-
-
-
-        {filteredProjects.length > 0 ? (
+        {isLoading ? (
+          <p className="mt-10 text-center text-slate-400" role="status">
+            Connecting to our project catalog...
+          </p>
+        ) : errorMessage ? (
+          <p
+            className="mt-10 text-center text-red-400"
+            role="alert"
+          >
+            {errorMessage}
+          </p>
+        ) : filteredProjects.length > 0 ? (
           <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredProjects.map((project) => (
-  <ProjectCard key={project.slug} project={project} />
-))}
+              <ProjectCard key={project.slug} project={project} />
+            ))}
           </div>
         ) : (
           <p className="mt-10 text-center text-slate-400">

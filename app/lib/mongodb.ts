@@ -1,35 +1,37 @@
-
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI: string = process.env.MONGODB_URI ?? "";
 
-if (!MONGODB_URI) {
+if (MONGODB_URI.length === 0) {
   throw new Error("Please add MONGODB_URI to your .env.local file");
 }
 
+type MongooseCache = {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+};
+
 declare global {
-  var mongoose: {
-    conn: typeof mongoose | null;
-    promise: Promise<typeof mongoose> | null;
-  } | undefined;
+  // Cache the connection between Next.js development reloads.
+  var _mongooseCache: MongooseCache | undefined;
 }
 
-const cached = global.mongoose ?? (global.mongoose = {
-  conn: null,
-  promise: null,
-});
+const cached: MongooseCache =
+  global._mongooseCache ??
+  (global._mongooseCache = {
+    conn: null,
+    promise: null,
+  });
 
-export default async function dbConnect() {
+export default async function dbConnect(): Promise<typeof mongoose> {
   if (cached.conn) {
     return cached.conn;
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose
-      .connect(MONGODB_URI, {
-        bufferCommands: false,
-      })
-      .then((connection) => connection);
+    cached.promise = mongoose.connect(MONGODB_URI, {
+      bufferCommands: false,
+    });
   }
 
   try {

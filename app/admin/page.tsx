@@ -1,8 +1,23 @@
 
 import { Suspense } from "react";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { auth } from "../lib/auth";
 import AdminDashboardData from "./AdminDashboardData";
 
-export default function AdminPage() {
+async function ProtectedAdminDashboard() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+  redirect("/sign-in");
+}
+
+if (session.user.role !== "admin") {
+  redirect("/");
+}
+
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-10 text-white sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
@@ -31,10 +46,28 @@ export default function AdminPage() {
         </Suspense>
 
         <p className="mt-6 text-sm text-slate-500">
-          Internal dashboard preview. Administrator authentication and
-          authorization are still required before production use.
+          Administrator-role protection and management-action authorization
+          are still being implemented.
         </p>
       </div>
     </main>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-slate-950 px-4 py-10 text-white sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <p className="rounded-xl border border-slate-800 bg-slate-900 p-6 text-slate-400">
+              Verifying your session...
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <ProtectedAdminDashboard />
+    </Suspense>
   );
 }

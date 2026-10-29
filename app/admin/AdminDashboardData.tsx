@@ -115,7 +115,7 @@ export default async function AdminDashboardData() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px] text-left text-sm">
+          <table className="w-full min-w-150 text-left text-sm">
             <thead>
               <tr className="border-b border-slate-800 text-slate-400">
                 <th className="px-4 py-4 font-medium">Project</th>

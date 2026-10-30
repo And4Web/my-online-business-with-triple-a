@@ -230,3 +230,59 @@ export async function PUT(
     );
   }
 }
+
+
+
+export async function DELETE(
+  request: Request,
+  { params }: RouteContext
+) {
+  // 1. Verify administrator access.
+  const authError = await requireAdmin(request);
+
+  if (authError) return authError;
+
+  try {
+    // 2. Get the product ID.
+    const { id } = await params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { ok: false, message: "Invalid product ID." },
+        { status: 400 }
+      );
+    }
+
+    // 3. Connect to MongoDB.
+    await dbConnect();
+
+    // 4. Delete the product.
+    const deletedProduct = await Product.findByIdAndDelete(id);
+
+    // 5. Check whether the product existed.
+    if (!deletedProduct) {
+      return NextResponse.json(
+        { ok: false, message: "Product not found." },
+        { status: 404 }
+      );
+    }
+
+    // 6. Return success.
+    return NextResponse.json({
+      ok: true,
+      message: "Product deleted successfully.",
+      product: {
+        id: deletedProduct._id.toString(),
+        slug: deletedProduct.slug,
+        title: deletedProduct.title,
+      },
+    });
+  } catch (error) {
+    console.error("Admin product deletion failed:", error);
+
+    return NextResponse.json(
+      { ok: false, message: "Unable to delete product." },
+      { status: 500 }
+    );
+  }
+}

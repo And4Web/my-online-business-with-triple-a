@@ -19,7 +19,7 @@ export default function Home() {
 
         <h2 className="mt-8 text-5xl font-extrabold leading-tight tracking-tight sm:text-7xl">
           Build faster.
-          <span className="block bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <span className="block bg-linear-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
             Launch smarter.
           </span>
         </h2>

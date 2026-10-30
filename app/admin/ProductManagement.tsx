@@ -62,7 +62,33 @@ export default function ProductManagement({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+
   const router = useRouter();
+
+  const categories = Array.from(
+  new Set(products.map((product) => product.category))
+).sort();
+
+const filteredProducts = products.filter((product) => {
+  const search = searchTerm.trim().toLowerCase();
+
+  const matchesSearch =
+    product.title.toLowerCase().includes(search) ||
+    product.slug.toLowerCase().includes(search);
+
+  const matchesCategory =
+    selectedCategory === "all" ||
+    product.category === selectedCategory;
+
+  const matchesStatus =
+    selectedStatus === "all" ||
+    product.status === selectedStatus;
+
+  return matchesSearch && matchesCategory && matchesStatus;
+});
   
   function openNewForm() {
     setForm(emptyForm);
@@ -171,6 +197,7 @@ export default function ProductManagement({
       }
 
       closeForm();
+      router.refresh();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Something went wrong."
@@ -437,8 +464,54 @@ export default function ProductManagement({
         </form>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-175 text-left text-sm">
+      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+  <input
+    type="search"
+    value={searchTerm}
+    onChange={(event) => setSearchTerm(event.target.value)}
+    placeholder="Search by project title or slug..."
+    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+  />
+
+  <select
+    value={selectedCategory}
+    onChange={(event) => setSelectedCategory(event.target.value)}
+    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+  >
+    <option value="all">All Categories</option>
+    {categories.map((category) => (
+      <option key={category} value={category}>
+        {category}
+      </option>
+    ))}
+  </select>
+
+  <select
+    value={selectedStatus}
+    onChange={(event) => setSelectedStatus(event.target.value)}
+    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+  >
+    <option value="all">All Statuses</option>
+    <option value="active">Active</option>
+    <option value="coming-soon">Coming Soon</option>
+    <option value="draft">Draft</option>
+  </select>
+
+  <button
+    type="button"
+    onClick={() => {
+      setSearchTerm("");
+      setSelectedCategory("all");
+      setSelectedStatus("all");
+    }}
+    className="rounded-lg border border-slate-700 px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-slate-800"
+  >
+    Clear Filters
+  </button>
+</div>
+
+<div className="overflow-x-auto">
+  <table className="w-full min-w-175 text-left text-sm">
           <thead>
             <tr className="border-b border-slate-800 text-slate-400">
               <th className="px-4 py-4 font-medium">Project</th>
@@ -450,7 +523,7 @@ export default function ProductManagement({
           </thead>
 
           <tbody>
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <tr
                 key={product.id}
                 className="border-b border-slate-800 last:border-0"
@@ -499,23 +572,29 @@ export default function ProductManagement({
               </tr>
             ))}
 
-            {products.length === 0 && (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-12 text-center text-slate-400"
-                >
-                  No products found. Create your first product above.
-                </td>
-              </tr>
-            )}
+            {filteredProducts.length === 0 && (
+  <tr>
+    <td
+      colSpan={5}
+      className="px-4 py-12 text-center text-slate-400"
+    >
+      {products.length === 0
+        ? "No products found. Create your first product above."
+        : "No products match your search or selected filters."}
+    </td>
+  </tr>
+)}
           </tbody>
         </table>
       </div>
 
+    
+
+    
+
       <p className="mt-4 text-sm text-slate-500">
-        Showing {products.length} products.
-      </p>
+  Showing {filteredProducts.length} of {products.length} products.
+</p>
     </section>
   );
 }

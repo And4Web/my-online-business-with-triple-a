@@ -9,6 +9,7 @@ export type Project = {
   color: string;
   href: string;
   features: string[];
+  imageUrl?: string;
 };
 
 export const projects: Project[] = [

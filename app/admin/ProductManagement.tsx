@@ -14,6 +14,7 @@ type Product = {
   price: number;
   color: string;
   features: string[];
+  imageUrl?: string;
   status: "draft" | "coming-soon" | "active";
 };
 
@@ -30,6 +31,7 @@ type ProductForm = {
   price: string;
   color: string;
   features: string;
+  imageUrl: string;
   status: "draft" | "coming-soon" | "active";
 };
 
@@ -42,6 +44,7 @@ const emptyForm: ProductForm = {
   price: "19",
   color: "blue",
   features: "",
+  imageUrl: "",
   status: "draft",
 };
 
@@ -108,6 +111,7 @@ const filteredProducts = products.filter((product) => {
       price: String(product.price),
       color: product.color,
       features: product.features.join("\n"),
+      imageUrl: product.imageUrl || "",
       status: product.status,
     });
 
@@ -145,6 +149,7 @@ const filteredProducts = products.filter((product) => {
         .split("\n")
         .map((item) => item.trim())
         .filter(Boolean),
+      imageUrl: form.imageUrl.trim(),
       status: form.status,
     };
 
@@ -371,6 +376,27 @@ const filteredProducts = products.filter((product) => {
                 className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-blue-500"
               />
             </div>
+
+            <div className="sm:col-span-2">
+  <label className="mb-2 block text-sm text-slate-300">
+    Product Preview Image URL
+  </label>
+
+  <input
+    type="url"
+    maxLength={2048}
+    value={form.imageUrl}
+    onChange={(event) =>
+      setForm({ ...form, imageUrl: event.target.value })
+    }
+    placeholder="https://example.com/my-project-preview.jpg"
+    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-blue-500"
+  />
+
+  <p className="mt-2 text-xs text-slate-500">
+    Optional. Add a publicly accessible HTTPS image URL.
+  </p>
+</div>
 
             <div className="sm:col-span-2">
               <label className="mb-2 block text-sm text-slate-300">

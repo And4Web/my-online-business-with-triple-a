@@ -6,25 +6,36 @@ import { requireAdmin } from "../../../lib/require-admin";
 
 const allowedStatuses = ["draft", "coming-soon", "active"];
 
+function isValidImageUrl(value: unknown): value is string {
+  if (typeof value !== "string" || value.length > 2048) {
+    return false;
+  }
 
+  if (value.trim() === "") {
+    return true;
+  }
+
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
 export async function GET(request: Request) {
-  // 1. Verify administrator access.
   const authError = await requireAdmin(request);
 
   if (authError) return authError;
 
   try {
-    // 2. Connect to MongoDB.
     await dbConnect();
 
-    // 3. Retrieve every product, including drafts.
     const products = await Product.find({})
       .select("-__v")
       .sort({ createdAt: -1 })
       .lean();
 
-    // 4. Return the products.
     return NextResponse.json({
       ok: true,
       count: products.length,
@@ -43,25 +54,15 @@ export async function GET(request: Request) {
   }
 }
 
-
-
 export async function POST(request: Request) {
-  // 1. Verify administrator access.
   const authError = await requireAdmin(request);
 
-  if (authError) {
-    return authError;
-  }
+  if (authError) return authError;
 
   try {
-    // 2. Read the submitted product data.
     const body: unknown = await request.json();
 
-    if (
-      !body ||
-      typeof body !== "object" ||
-      Array.isArray(body)
-    ) {
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json(
         { ok: false, message: "Invalid product data." },
         { status: 400 }
@@ -80,9 +81,10 @@ export async function POST(request: Request) {
       color,
       features,
       status,
+      imageUrl,
     } = data;
 
-    // 3. Validate required text fields.
+    // Validate required text fields.
     if (
       typeof slug !== "string" ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ||
@@ -103,7 +105,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. Validate price.
+    // Validate price.
     if (
       typeof price !== "number" ||
       !Number.isFinite(price) ||
@@ -116,7 +118,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 5. Validate technologies and features.
+    // Validate technologies.
     if (
       !Array.isArray(technologies) ||
       technologies.length === 0 ||
@@ -134,6 +136,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // Validate features.
     if (
       features !== undefined &&
       (
@@ -153,7 +156,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // 6. Validate product status.
+    // Validate image URL.
+if (!isValidImageUrl(imageUrl ?? "")) {
+  return NextResponse.json(
+    {
+      ok: false,
+      message: "Please provide a valid HTTPS image URL.",
+    },
+    { status: 400 }
+  );
+}
+
+const productImageUrl =
+  typeof imageUrl === "string" ? imageUrl.trim() : "";
+
+    // Validate status.
     const productStatus = status ?? "draft";
 
     if (
@@ -166,7 +183,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 7. Validate optional color.
+    // Validate color.
     const productColor = color ?? "blue";
 
     if (
@@ -179,10 +196,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // 8. Connect to MongoDB.
     await dbConnect();
 
-    // 9. Create the product.
     const product = await Product.create({
       slug: slug.trim(),
       title: title.trim(),
@@ -193,6 +208,7 @@ export async function POST(request: Request) {
       color: productColor,
       features: (features ?? []).map((item: string) => item.trim()),
       status: productStatus,
+      imageUrl: productImageUrl,
     });
 
     return NextResponse.json(
@@ -200,17 +216,18 @@ export async function POST(request: Request) {
         ok: true,
         message: "Product created successfully.",
         product: {
+          id: product._id.toString(),
           slug: product.slug,
           title: product.title,
           category: product.category,
           price: product.price,
           status: product.status,
+          imageUrl: product.imageUrl,
         },
       },
       { status: 201 }
     );
   } catch (error) {
-    // Duplicate product slugs.
     if (
       typeof error === "object" &&
       error !== null &&

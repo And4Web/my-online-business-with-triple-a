@@ -1,4 +1,6 @@
+
 import Link from "next/link";
+import Image from "next/image";
 import type { Project } from "../lib/projects";
 
 type ProjectCardProps = {
@@ -11,22 +13,38 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
       {/* Product Preview */}
       <div className="relative flex h-48 items-center justify-center overflow-hidden bg-linear-to-br from-slate-800 via-slate-900 to-blue-950">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.18),transparent_65%)]" />
 
-        <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-blue-400/20 bg-slate-950/70 shadow-2xl transition duration-300 group-hover:scale-110">
-          <span className="text-4xl font-bold text-blue-400">
-            {project.title.charAt(0).toUpperCase()}
-          </span>
-        </div>
+        {project.imageUrl ? (
+          <Image
+            src={project.imageUrl}
+            alt={`${project.title} preview`}
+            fill
+            unoptimized
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.18),transparent_65%)]" />
 
-        <div className="absolute bottom-4 left-4">
+            <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-blue-400/20 bg-slate-950/70 shadow-2xl transition duration-300 group-hover:scale-110">
+              <span className="text-4xl font-bold text-blue-400">
+                {project.title.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          </>
+        )}
+
+        <div className="absolute inset-0 bg-linear-to-t from-slate-950/70 via-transparent to-transparent" />
+
+        <div className="absolute bottom-4 left-4 z-10">
           <span className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-xs font-medium text-slate-300 backdrop-blur">
             Nexora Project
           </span>
         </div>
 
         {!project.href && (
-          <span className="absolute right-4 top-4 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">
+          <span className="absolute right-4 top-4 z-10 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">
             Coming Soon
           </span>
         )}

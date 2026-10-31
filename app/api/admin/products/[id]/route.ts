@@ -11,45 +11,80 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function PUT(
-  request: Request,
-  { params }: RouteContext
-) {
-  // 1. Verify administrator access.
-  const authError = await requireAdmin(request);
+function isValidImageUrl(value: unknown): boolean {
+  if (typeof value !== "string" || value.length > 2048) {
+    return false;
+  }
 
-  if (authError) return authError;
+  if (value.trim() === "") {
+    return true;
+  }
 
   try {
-    // 2. Get the product ID from the URL.
-    const { id } = await params;
+    const url = new URL(value.trim());
+    return url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) => typeof item === "string" && item.trim().length > 0
+    )
+  );
+}
+
+function isValidColor(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    value.trim().length > 0 &&
+    value.trim().length <= 100 &&
+    /^[a-zA-Z0-9\s-]+$/.test(value.trim())
+  );
+}
+
+// UPDATE PRODUCT
+export async function PUT(
+  request: Request,
+  context: RouteContext
+) {
+  try {
+    // Check administrator access.
+    const authError = await requireAdmin(request);
+
+    if (authError) {
+      return authError;
+    }
+
+    // Validate product ID.
+    const { id } = await context.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
-        { ok: false, message: "Invalid product ID." },
+        {
+          ok: false,
+          message: "Invalid product ID.",
+        },
         { status: 400 }
       );
     }
 
-    // 3. Read the submitted product information.
-    let body: unknown;
-
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json(
-        { ok: false, message: "Invalid JSON data." },
-        { status: 400 }
-      );
-    }
+    // Read request body.
+    const body: unknown = await request.json();
 
     if (
-      !body ||
       typeof body !== "object" ||
+      body === null ||
       Array.isArray(body)
     ) {
       return NextResponse.json(
-        { ok: false, message: "Invalid product data." },
+        {
+          ok: false,
+          message: "Invalid request body.",
+        },
         { status: 400 }
       );
     }
@@ -66,30 +101,67 @@ export async function PUT(
       color,
       features,
       status,
+      imageUrl,
     } = data;
 
-    // 4. Validate required text fields.
+    // Validate required text fields.
     if (
       typeof slug !== "string" ||
-      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ||
-      slug.length > 100 ||
-      typeof title !== "string" ||
-      !title.trim() ||
-      title.length > 150 ||
-      typeof category !== "string" ||
-      !category.trim() ||
-      category.length > 80 ||
-      typeof description !== "string" ||
-      !description.trim() ||
-      description.length > 2000
+      slug.trim().length < 2 ||
+      slug.trim().length > 100
     ) {
       return NextResponse.json(
-        { ok: false, message: "Please provide valid product details." },
+        {
+          ok: false,
+          message: "Please provide a valid product slug.",
+        },
         { status: 400 }
       );
     }
 
-    // 5. Validate price.
+    if (
+      typeof title !== "string" ||
+      title.trim().length < 2 ||
+      title.trim().length > 120
+    ) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Please provide a valid product title.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (
+      typeof category !== "string" ||
+      category.trim().length < 2 ||
+      category.trim().length > 60
+    ) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Please provide a valid product category.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (
+      typeof description !== "string" ||
+      description.trim().length < 10 ||
+      description.trim().length > 2000
+    ) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Description must be between 10 and 2000 characters.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate price.
     if (
       typeof price !== "number" ||
       !Number.isFinite(price) ||
@@ -97,75 +169,79 @@ export async function PUT(
       price > 49
     ) {
       return NextResponse.json(
-        { ok: false, message: "Price must be between $1 and $49." },
+        {
+          ok: false,
+          message: "Product price must be between $1 and $49.",
+        },
         { status: 400 }
       );
     }
 
-    // 6. Validate technologies.
-    if (
-      !Array.isArray(technologies) ||
-      technologies.length === 0 ||
-      technologies.length > 20 ||
-      !technologies.every(
-        (item) =>
-          typeof item === "string" &&
-          item.trim().length > 0 &&
-          item.length <= 50
-      )
-    ) {
+    // Validate technologies and features.
+    if (!isStringArray(technologies)) {
       return NextResponse.json(
-        { ok: false, message: "Please provide valid technologies." },
+        {
+          ok: false,
+          message: "Please provide valid product technologies.",
+        },
         { status: 400 }
       );
     }
 
-    // 7. Validate features.
-    if (
-      features !== undefined &&
-      (
-        !Array.isArray(features) ||
-        features.length > 30 ||
-        !features.every(
-          (item) =>
-            typeof item === "string" &&
-            item.trim().length > 0 &&
-            item.length <= 200
-        )
-      )
-    ) {
+    if (!isStringArray(features)) {
       return NextResponse.json(
-        { ok: false, message: "Please provide valid features." },
+        {
+          ok: false,
+          message: "Please provide valid product features.",
+        },
         { status: 400 }
       );
     }
 
-    // 8. Validate product status.
+    // Validate status.
     if (
       typeof status !== "string" ||
       !allowedStatuses.includes(status)
     ) {
       return NextResponse.json(
-        { ok: false, message: "Invalid product status." },
+        {
+          ok: false,
+          message: "Please select a valid product status.",
+        },
         { status: 400 }
       );
     }
 
-    // 9. Validate product color.
-    if (
-      typeof color !== "string" ||
-      !/^[a-zA-Z0-9-]{1,30}$/.test(color)
-    ) {
+    // Validate color.
+    if (!isValidColor(color)) {
       return NextResponse.json(
-        { ok: false, message: "Invalid product color." },
+        {
+          ok: false,
+          message: "Please provide a valid product color.",
+        },
         { status: 400 }
       );
     }
 
-    // 10. Connect to MongoDB.
+    // Validate optional image URL.
+    if (!isValidImageUrl(imageUrl ?? "")) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Please provide a valid HTTPS image URL.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Safely convert image URL to a string.
+    const productImageUrl =
+      typeof imageUrl === "string" ? imageUrl.trim() : "";
+
+    // Connect to database.
     await dbConnect();
 
-    // 11. Update the product.
+    // Update product.
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
       {
@@ -173,11 +249,12 @@ export async function PUT(
         title: title.trim(),
         category: category.trim(),
         description: description.trim(),
-        technologies: technologies.map((item: string) => item.trim()),
+        technologies: technologies.map((item) => item.trim()),
         price,
-        color,
-        features: (features ?? []).map((item: string) => item.trim()),
+        color: color.trim(),
+        features: features.map((item) => item.trim()),
         status,
+        imageUrl: productImageUrl,
       },
       {
         new: true,
@@ -185,10 +262,12 @@ export async function PUT(
       }
     ).select("-__v");
 
-    // 12. Check whether the product exists.
     if (!updatedProduct) {
       return NextResponse.json(
-        { ok: false, message: "Product not found." },
+        {
+          ok: false,
+          message: "Product not found.",
+        },
         { status: 404 }
       );
     }
@@ -203,10 +282,11 @@ export async function PUT(
         category: updatedProduct.category,
         price: updatedProduct.price,
         status: updatedProduct.status,
+        imageUrl: updatedProduct.imageUrl ?? "",
       },
     });
-  } catch (error) {
-    // 13. Handle duplicate slugs.
+  } catch (error: unknown) {
+    // Handle duplicate slug.
     if (
       typeof error === "object" &&
       error !== null &&
@@ -222,52 +302,60 @@ export async function PUT(
       );
     }
 
-    console.error("Admin product update failed:", error);
+    console.error("Update product error:", error);
 
     return NextResponse.json(
-      { ok: false, message: "Unable to update product." },
+      {
+        ok: false,
+        message: "Something went wrong while updating the product.",
+      },
       { status: 500 }
     );
   }
 }
 
-
-
+// DELETE PRODUCT
 export async function DELETE(
   request: Request,
-  { params }: RouteContext
+  context: RouteContext
 ) {
-  // 1. Verify administrator access.
-  const authError = await requireAdmin(request);
-
-  if (authError) return authError;
-
   try {
-    // 2. Get the product ID.
-    const { id } = await params;
+    // Check administrator access.
+    const authError = await requireAdmin(request);
+
+    if (authError) {
+      return authError;
+    }
+
+    // Validate product ID.
+    const { id } = await context.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
-        { ok: false, message: "Invalid product ID." },
+        {
+          ok: false,
+          message: "Invalid product ID.",
+        },
         { status: 400 }
       );
     }
 
-    // 3. Connect to MongoDB.
+    // Connect to database.
     await dbConnect();
 
-    // 4. Delete the product.
+    // Delete product.
     const deletedProduct = await Product.findByIdAndDelete(id);
 
-    // 5. Check whether the product existed.
     if (!deletedProduct) {
       return NextResponse.json(
-        { ok: false, message: "Product not found." },
+        {
+          ok: false,
+          message: "Product not found.",
+        },
         { status: 404 }
       );
     }
 
-    // 6. Return success.
     return NextResponse.json({
       ok: true,
       message: "Product deleted successfully.",
@@ -278,10 +366,13 @@ export async function DELETE(
       },
     });
   } catch (error) {
-    console.error("Admin product deletion failed:", error);
+    console.error("Delete product error:", error);
 
     return NextResponse.json(
-      { ok: false, message: "Unable to delete product." },
+      {
+        ok: false,
+        message: "Something went wrong while deleting the product.",
+      },
       { status: 500 }
     );
   }

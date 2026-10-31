@@ -10,6 +10,7 @@ export interface IProduct {
   price: number;
   color: string;
   features: string[];
+  imageUrl?: string;
   status: "draft" | "coming-soon" | "active";
 }
 
@@ -56,6 +57,11 @@ const productSchema = new Schema<IProduct>(
     features: {
       type: [String],
       default: [],
+    },
+    imageUrl: {
+      type: String,
+      trim: true,
+      default: "",
     },
     status: {
       type: String,

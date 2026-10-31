@@ -30,6 +30,7 @@ export default async function FeaturedProjects() {
       price: product.price,
       color: product.color,
       features: product.features,
+      imageUrl: product.imageUrl ?? "",
       href: `/projects/${product.slug}`,
     }));
   } catch (error) {

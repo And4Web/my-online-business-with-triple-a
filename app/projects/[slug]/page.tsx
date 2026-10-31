@@ -1,5 +1,6 @@
 
 import Link from "next/link";
+import Image from "next/image";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
@@ -36,6 +37,8 @@ async function ProjectDetails({ slug }: { slug: string }) {
   }
 
   const isAvailable = product.status === "active";
+  const imageUrl =
+    typeof product.imageUrl === "string" ? product.imageUrl : "";
 
   return (
     <main className="min-h-screen bg-slate-950 px-5 py-12 text-white sm:px-6 sm:py-16">
@@ -51,23 +54,40 @@ async function ProjectDetails({ slug }: { slug: string }) {
         </Link>
 
         {/* Product Preview */}
-        <section className="relative mt-8 overflow-hidden rounded-3xl border border-slate-800 bg-linear-to-br from-slate-900 via-slate-900 to-blue-950/60">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.15),transparent_65%)]" />
+        <section className="relative mt-8 flex min-h-64 items-center justify-center overflow-hidden rounded-3xl border border-slate-800 bg-linear-to-br from-slate-900 via-slate-900 to-blue-950/60 sm:min-h-96">
 
-          <div className="relative flex min-h-64 flex-col items-center justify-center px-6 py-14 text-center sm:min-h-80">
-            <span className="rounded-full border border-blue-400/20 bg-blue-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-blue-300">
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={`${product.title} preview`}
+              fill
+              priority
+              unoptimized
+              sizes="(max-width: 768px) 100vw, 1152px"
+              className="object-cover"
+            />
+          ) : (
+            <>
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.15),transparent_65%)]" />
+
+              <div className="relative flex flex-col items-center justify-center px-6 py-14 text-center">
+                <div className="flex h-24 w-24 items-center justify-center rounded-3xl border border-blue-400/20 bg-slate-950/70 shadow-2xl shadow-blue-950/40 sm:h-28 sm:w-28">
+                  <span className="text-5xl font-extrabold text-blue-400 sm:text-6xl">
+                    {product.title.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {imageUrl && (
+            <div className="absolute inset-0 bg-linear-to-t from-slate-950/60 via-transparent to-slate-950/20" />
+          )}
+
+          <div className="absolute bottom-6 left-6 z-10">
+            <span className="rounded-full border border-white/10 bg-slate-950/70 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-slate-200 backdrop-blur">
               Nexora Project Preview
             </span>
-
-            <div className="mt-7 flex h-24 w-24 items-center justify-center rounded-3xl border border-blue-400/20 bg-slate-950/70 shadow-2xl shadow-blue-950/40 sm:h-28 sm:w-28">
-              <span className="text-5xl font-extrabold text-blue-400 sm:text-6xl">
-                {product.title.charAt(0).toUpperCase()}
-              </span>
-            </div>
-
-            <p className="mt-6 text-sm font-medium text-slate-400">
-              Ready-made full-stack source code
-            </p>
           </div>
         </section>
 

@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "../lib/auth";
 import SignOutButton from "./SignOutButton";
+import OrderHistory from "./OrderHistory";
+
 
 async function ProtectedAccountPage() {
   const session = await auth.api.getSession({
@@ -85,7 +87,7 @@ async function ProtectedAccountPage() {
           </section>
         </div>
 
-        <section className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-6">
+        {/* <section className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-6">
           <h2 className="text-xl font-semibold">
             My Purchases
           </h2>
@@ -94,7 +96,9 @@ async function ProtectedAccountPage() {
             Your purchase history will appear here once our order
             management system is ready.
           </p>
-        </section>
+        </section> */}
+
+        <OrderHistory />
 
         <div className="mt-8 flex flex-col gap-4 border-t border-slate-800 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-500">

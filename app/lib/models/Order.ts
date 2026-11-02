@@ -9,6 +9,7 @@ export interface IOrder {
   amount: number;
   currency: string;
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
+  idempotencyKey?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,9 +58,26 @@ const orderSchema = new Schema<IOrder>(
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
     },
+
+    idempotencyKey: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,
+  }
+);
+
+// Prevent duplicate requests from creating duplicate orders.
+// Existing orders without an idempotency key remain valid.
+orderSchema.index(
+  { userId: 1, idempotencyKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      idempotencyKey: { $type: "string" },
+    },
   }
 );
 

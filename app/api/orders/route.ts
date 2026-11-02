@@ -70,7 +70,42 @@ export async function POST(request: Request) {
       );
     }
 
+    if (
+      typeof body.idempotencyKey !== "string" ||
+      !/^[0-9a-f-]{36}$/i.test(body.idempotencyKey)
+    ) {
+      return NextResponse.json(
+        { ok: false, message: "A valid order request key is required." },
+        { status: 400 }
+      );
+    }
+
     await dbConnect();
+
+    const userId = session.user.id;
+    const idempotencyKey = body.idempotencyKey;
+
+    // Return the existing order if this request was already processed.
+    const existingOrder = await Order.findOne({
+      userId,
+      idempotencyKey,
+    });
+
+    if (existingOrder) {
+      return NextResponse.json({
+        ok: true,
+        message: "This order request has already been processed.",
+        order: {
+          id: existingOrder._id.toString(),
+          productTitle: existingOrder.productTitle,
+          productSlug: existingOrder.productSlug,
+          amount: existingOrder.amount,
+          currency: existingOrder.currency,
+          paymentStatus: existingOrder.paymentStatus,
+          createdAt: existingOrder.createdAt,
+        },
+      });
+    }
 
     const product = await Product.findOne({
       slug: body.slug.trim(),
@@ -84,32 +119,66 @@ export async function POST(request: Request) {
       );
     }
 
-    const order = await Order.create({
-      userId: session.user.id,
-      productId: product._id,
-      productTitle: product.title,
-      productSlug: product.slug,
-      amount: product.price,
-      currency: "USD",
-      paymentStatus: "pending",
-    });
+    try {
+      const order = await Order.create({
+        userId,
+        productId: product._id,
+        productTitle: product.title,
+        productSlug: product.slug,
+        amount: product.price,
+        currency: "USD",
+        paymentStatus: "pending",
+        idempotencyKey,
+      });
 
-    return NextResponse.json(
-      {
-        ok: true,
-        message: "Pending order created successfully.",
-        order: {
-          id: order._id.toString(),
-          productTitle: order.productTitle,
-          productSlug: order.productSlug,
-          amount: order.amount,
-          currency: order.currency,
-          paymentStatus: order.paymentStatus,
-          createdAt: order.createdAt,
+      return NextResponse.json(
+        {
+          ok: true,
+          message: "Pending order created successfully.",
+          order: {
+            id: order._id.toString(),
+            productTitle: order.productTitle,
+            productSlug: order.productSlug,
+            amount: order.amount,
+            currency: order.currency,
+            paymentStatus: order.paymentStatus,
+            createdAt: order.createdAt,
+          },
         },
-      },
-      { status: 201 }
-    );
+        { status: 201 }
+      );
+    } catch (error) {
+      // Handle two identical requests arriving at the same time.
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === 11000
+      ) {
+        const duplicateOrder = await Order.findOne({
+          userId,
+          idempotencyKey,
+        });
+
+        if (duplicateOrder) {
+          return NextResponse.json({
+            ok: true,
+            message: "This order request has already been processed.",
+            order: {
+              id: duplicateOrder._id.toString(),
+              productTitle: duplicateOrder.productTitle,
+              productSlug: duplicateOrder.productSlug,
+              amount: duplicateOrder.amount,
+              currency: duplicateOrder.currency,
+              paymentStatus: duplicateOrder.paymentStatus,
+              createdAt: duplicateOrder.createdAt,
+            },
+          });
+        }
+      }
+
+      throw error;
+    }
   } catch {
     return NextResponse.json(
       { ok: false, message: "Unable to create order." },

@@ -13,11 +13,20 @@ export default function PurchaseButton({ slug }: PurchaseButtonProps) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [needsSignIn, setNeedsSignIn] = useState(false);
+  const [idempotencyKey, setIdempotencyKey] = useState("");
+
+
 
   async function handlePurchase() {
     setLoading(true);
     setError("");
     setNeedsSignIn(false);
+
+    const requestKey = idempotencyKey || crypto.randomUUID();
+
+if (!idempotencyKey) {
+  setIdempotencyKey(requestKey);
+}
 
     try {
       const response = await fetch("/api/orders", {
@@ -25,7 +34,10 @@ export default function PurchaseButton({ slug }: PurchaseButtonProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ slug }),
+        body: JSON.stringify({
+  slug,
+  idempotencyKey: requestKey,
+}),
       });
 
       const data = await response.json();

@@ -6,6 +6,7 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import dbConnect from "../../lib/mongodb";
 import Product from "../../lib/models/Product";
+import PurchaseButton from "../../components/PurchaseButton";
 
 type ProjectDetailPageProps = {
   params: Promise<{
@@ -190,8 +191,8 @@ async function ProjectDetails({ slug }: { slug: string }) {
             </div>
 
             <p className="mt-3 text-sm leading-6 text-slate-400">
-              One-time project listing price. Checkout is not enabled yet.
-            </p>
+  One-time project listing price. Payment processing is not enabled yet.
+</p>
 
             <div className="my-7 border-t border-slate-800" />
 
@@ -221,19 +222,35 @@ async function ProjectDetails({ slug }: { slug: string }) {
               </li>
             </ul>
 
-            <div className="mt-8 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
-              <h3 className="font-semibold text-amber-300">
-                {isAvailable
-                  ? "Purchasing Coming Soon"
-                  : "Project Coming Soon"}
-              </h3>
+            
+{isAvailable ? (
+  <div className="mt-8 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+    <h3 className="font-semibold text-emerald-300">
+      Ready to Order
+    </h3>
 
-              <p className="mt-2 text-sm leading-6 text-slate-400">
-                {isAvailable
-                  ? "This project is marked as available, but payment processing and secure downloads are still being developed."
-                  : "We are preparing this project for release. It cannot currently be purchased or downloaded."}
-              </p>
-            </div>
+    <p className="mt-2 text-sm leading-6 text-slate-400">
+      You can create an order for this project. Payment processing
+      and secure downloads will be enabled in a later stage.
+    </p>
+
+    <div className="mt-5">
+      <PurchaseButton slug={product.slug} />
+    </div>
+  </div>
+) : (
+  <div className="mt-8 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
+    <h3 className="font-semibold text-amber-300">
+      Project Coming Soon
+    </h3>
+
+    <p className="mt-2 text-sm leading-6 text-slate-400">
+      We are preparing this project for release. It cannot
+      currently be purchased or downloaded.
+    </p>
+  </div>
+)}
+
 
             <Link
               href="/projects"

@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import dbConnect from "../lib/mongodb";
 import Product from "../lib/models/Product";
 import ProductManagement from "./ProductManagement";
+import AdminOrders from "./AdminOrders";
 
 async function loadProducts() {
   try {
@@ -115,6 +116,8 @@ export default async function AdminDashboardData() {
       </section>
 
       <ProductManagement initialProducts={products} />
+
+      <AdminOrders />
     </>
   );
 }

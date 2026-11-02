@@ -45,10 +45,7 @@ if (session.user.role !== "admin") {
           <AdminDashboardData />
         </Suspense>
 
-        <p className="mt-6 text-sm text-slate-500">
-          Administrator-role protection and management-action authorization
-          are still being implemented.
-        </p>
+        
       </div>
     </main>
   );

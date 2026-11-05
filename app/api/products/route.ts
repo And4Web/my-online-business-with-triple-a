@@ -6,12 +6,17 @@ export async function GET() {
   try {
     await dbConnect();
 
-    const products = await Product.find({
-      status: { $in: ["active", "coming-soon"] },
-    })
-      .select("-__v")
-      .sort({ createdAt: -1 })
-      .lean();
+    // const products = await Product.find({
+    //   status: { $in: ["active", "coming-soon"] },
+    // })
+    //   .select("-__v")
+    //   .sort({ createdAt: -1 })
+    //   .lean();
+
+      const products = await Product.find({})
+  .select("-__v -downloadFile.storageKey")
+  .sort({ createdAt: -1 })
+  .lean();
 
     return NextResponse.json({
       ok: true,

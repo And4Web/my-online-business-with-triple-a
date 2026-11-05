@@ -148,7 +148,7 @@ export default function AdminOrders() {
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px] text-left text-sm">
+                <table className="w-full min-w-225 text-left text-sm">
                   <thead className="bg-slate-950/70 text-slate-400">
                     <tr>
                       <th className="px-5 py-4 font-medium">Order ID</th>

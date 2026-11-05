@@ -1,5 +1,13 @@
-
 import mongoose, { Schema } from "mongoose";
+
+export interface IProductDownloadFile {
+  storageKey: string;
+  fileName: string;
+  fileSize: number;
+  contentType: "application/zip";
+  uploadedAt: Date;
+  version: number;
+}
 
 export interface IProduct {
   slug: string;
@@ -12,7 +20,48 @@ export interface IProduct {
   features: string[];
   imageUrl?: string;
   status: "draft" | "coming-soon" | "active";
+  downloadFile?: IProductDownloadFile;
 }
+
+const downloadFileSchema = new Schema<IProductDownloadFile>(
+  {
+    storageKey: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    fileName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    fileSize: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    contentType: {
+      type: String,
+      enum: ["application/zip"],
+      default: "application/zip",
+      required: true,
+    },
+    uploadedAt: {
+      type: Date,
+      default: Date.now,
+      required: true,
+    },
+    version: {
+      type: Number,
+      default: 1,
+      min: 1,
+      required: true,
+    },
+  },
+  {
+    _id: false,
+  }
+);
 
 const productSchema = new Schema<IProduct>(
   {
@@ -68,6 +117,11 @@ const productSchema = new Schema<IProduct>(
       enum: ["draft", "coming-soon", "active"],
       default: "draft",
       required: true,
+    },
+    downloadFile: {
+      type: downloadFileSchema,
+      required: false,
+      default: undefined,
     },
   },
   {

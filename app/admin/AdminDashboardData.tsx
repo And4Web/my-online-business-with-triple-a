@@ -1,4 +1,3 @@
-
 import { connection } from "next/server";
 import dbConnect from "../lib/mongodb";
 import Product from "../lib/models/Product";
@@ -11,7 +10,7 @@ async function loadProducts() {
 
     const products = await Product.find({})
       .select(
-        "_id title category price status slug description technologies color features"
+        "_id title category price status slug description technologies color features downloadFile.fileName downloadFile.fileSize downloadFile.uploadedAt downloadFile.version",
       )
       .sort({ createdAt: -1 })
       .lean();
@@ -28,6 +27,17 @@ async function loadProducts() {
         color: product.color,
         features: product.features,
         status: product.status,
+
+        downloadFile: product.downloadFile
+          ? {
+              fileName: product.downloadFile.fileName,
+              fileSize: product.downloadFile.fileSize,
+              uploadedAt: new Date(
+                product.downloadFile.uploadedAt,
+              ).toISOString(),
+              version: product.downloadFile.version,
+            }
+          : null,
       })),
       failed: false,
     };
@@ -52,8 +62,8 @@ export default async function AdminDashboardData() {
         role="alert"
         className="rounded-xl border border-red-900 bg-red-950/30 p-6 text-red-300"
       >
-        Unable to load dashboard data. Please check the database connection
-        and try again.
+        Unable to load dashboard data. Please check the database connection and
+        try again.
       </p>
     );
   }
@@ -61,15 +71,15 @@ export default async function AdminDashboardData() {
   const totalProjects = products.length;
 
   const activeProjects = products.filter(
-    (product) => product.status === "active"
+    (product) => product.status === "active",
   ).length;
 
   const comingSoonProjects = products.filter(
-    (product) => product.status === "coming-soon"
+    (product) => product.status === "coming-soon",
   ).length;
 
   const draftProjects = products.filter(
-    (product) => product.status === "draft"
+    (product) => product.status === "draft",
   ).length;
 
   const stats = [
@@ -108,9 +118,7 @@ export default async function AdminDashboardData() {
           >
             <p className="text-sm text-slate-400">{stat.title}</p>
             <p className="mt-4 text-3xl font-bold">{stat.value}</p>
-            <p className="mt-2 text-sm text-slate-500">
-              {stat.description}
-            </p>
+            <p className="mt-2 text-sm text-slate-500">{stat.description}</p>
           </div>
         ))}
       </section>

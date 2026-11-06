@@ -1,9 +1,13 @@
-
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import dbConnect from "../../../../lib/mongodb";
 import Product from "../../../../lib/models/Product";
 import { requireAdmin } from "../../../../lib/require-admin";
+import {
+  getStorageClient,
+  getStorageConfig,
+} from "../../../../lib/storage/client";
 
 const allowedStatuses = ["draft", "coming-soon", "active"];
 
@@ -31,9 +35,7 @@ function isValidImageUrl(value: unknown): boolean {
 function isStringArray(value: unknown): value is string[] {
   return (
     Array.isArray(value) &&
-    value.every(
-      (item) => typeof item === "string" && item.trim().length > 0
-    )
+    value.every((item) => typeof item === "string" && item.trim().length > 0)
   );
 }
 
@@ -47,10 +49,7 @@ function isValidColor(value: unknown): value is string {
 }
 
 // UPDATE PRODUCT
-export async function PUT(
-  request: Request,
-  context: RouteContext
-) {
+export async function PUT(request: Request, context: RouteContext) {
   try {
     // Check administrator access.
     const authError = await requireAdmin(request);
@@ -68,24 +67,20 @@ export async function PUT(
           ok: false,
           message: "Invalid product ID.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Read request body.
     const body: unknown = await request.json();
 
-    if (
-      typeof body !== "object" ||
-      body === null ||
-      Array.isArray(body)
-    ) {
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
       return NextResponse.json(
         {
           ok: false,
           message: "Invalid request body.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -115,7 +110,7 @@ export async function PUT(
           ok: false,
           message: "Please provide a valid product slug.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -129,7 +124,7 @@ export async function PUT(
           ok: false,
           message: "Please provide a valid product title.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -143,7 +138,7 @@ export async function PUT(
           ok: false,
           message: "Please provide a valid product category.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -157,7 +152,7 @@ export async function PUT(
           ok: false,
           message: "Description must be between 10 and 2000 characters.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -173,7 +168,7 @@ export async function PUT(
           ok: false,
           message: "Product price must be between $1 and $49.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -184,7 +179,7 @@ export async function PUT(
           ok: false,
           message: "Please provide valid product technologies.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -194,21 +189,18 @@ export async function PUT(
           ok: false,
           message: "Please provide valid product features.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Validate status.
-    if (
-      typeof status !== "string" ||
-      !allowedStatuses.includes(status)
-    ) {
+    if (typeof status !== "string" || !allowedStatuses.includes(status)) {
       return NextResponse.json(
         {
           ok: false,
           message: "Please select a valid product status.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -219,7 +211,7 @@ export async function PUT(
           ok: false,
           message: "Please provide a valid product color.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -230,13 +222,12 @@ export async function PUT(
           ok: false,
           message: "Please provide a valid HTTPS image URL.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Safely convert image URL to a string.
-    const productImageUrl =
-      typeof imageUrl === "string" ? imageUrl.trim() : "";
+    const productImageUrl = typeof imageUrl === "string" ? imageUrl.trim() : "";
 
     // Connect to database.
     await dbConnect();
@@ -259,7 +250,7 @@ export async function PUT(
       {
         new: true,
         runValidators: true,
-      }
+      },
     ).select("-__v");
 
     if (!updatedProduct) {
@@ -268,7 +259,7 @@ export async function PUT(
           ok: false,
           message: "Product not found.",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -298,7 +289,7 @@ export async function PUT(
           ok: false,
           message: "A product with this slug already exists.",
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -309,16 +300,13 @@ export async function PUT(
         ok: false,
         message: "Something went wrong while updating the product.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-// DELETE PRODUCT
-export async function DELETE(
-  request: Request,
-  context: RouteContext
-) {
+// DELETE PRODUCT AND ITS ZIP FILE
+export async function DELETE(request: Request, context: RouteContext) {
   try {
     // Check administrator access.
     const authError = await requireAdmin(request);
@@ -336,29 +324,69 @@ export async function DELETE(
           ok: false,
           message: "Invalid product ID.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Connect to database.
     await dbConnect();
 
-    // Delete product.
+    // Find product before deleting it.
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Product not found.",
+        },
+        { status: 404 },
+      );
+    }
+
+    // Get the ZIP file storage key.
+    const storageKey = product.downloadFile?.storageKey;
+
+    // Delete ZIP file from Backblaze B2 if one exists.
+    if (storageKey) {
+      // Only allow deletion from this product's storage folder.
+      if (
+        !storageKey.startsWith("products/") ||
+        storageKey.includes("..") ||
+        storageKey.includes("\\")
+      ) {
+        throw new Error("Invalid product storage key.");
+      }
+
+      const config = getStorageConfig();
+      const storageClient = getStorageClient();
+
+      await storageClient.send(
+        new DeleteObjectCommand({
+          Bucket: config.bucket,
+          Key: storageKey,
+        }),
+      );
+    }
+
+    // Delete product from MongoDB only after storage deletion succeeds.
     const deletedProduct = await Product.findByIdAndDelete(id);
 
     if (!deletedProduct) {
       return NextResponse.json(
         {
           ok: false,
-          message: "Product not found.",
+          message: "Product could not be deleted.",
         },
-        { status: 404 }
+        { status: 500 },
       );
     }
 
     return NextResponse.json({
       ok: true,
-      message: "Product deleted successfully.",
+      message: storageKey
+        ? "Product and its ZIP file deleted successfully."
+        : "Product deleted successfully.",
       product: {
         id: deletedProduct._id.toString(),
         slug: deletedProduct.slug,
@@ -371,9 +399,10 @@ export async function DELETE(
     return NextResponse.json(
       {
         ok: false,
-        message: "Something went wrong while deleting the product.",
+        message:
+          "Something went wrong while deleting the product and its ZIP file.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -16,6 +15,12 @@ type Product = {
   features: string[];
   imageUrl?: string;
   status: "draft" | "coming-soon" | "active";
+  downloadFile?: {
+    fileName: string;
+    fileSize: number;
+    uploadedAt: string;
+    version: number;
+  } | null;
 };
 
 type ProductManagementProps = {
@@ -54,6 +59,18 @@ const statusStyles: Record<string, string> = {
   draft: "bg-slate-700 text-slate-300",
 };
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
 export default function ProductManagement({
   initialProducts,
 }: ProductManagementProps) {
@@ -64,6 +81,11 @@ export default function ProductManagement({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<
+    Record<string, File | null>
+  >({});
+
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -72,27 +94,25 @@ export default function ProductManagement({
   const router = useRouter();
 
   const categories = Array.from(
-  new Set(products.map((product) => product.category))
-).sort();
+    new Set(products.map((product) => product.category)),
+  ).sort();
 
-const filteredProducts = products.filter((product) => {
-  const search = searchTerm.trim().toLowerCase();
+  const filteredProducts = products.filter((product) => {
+    const search = searchTerm.trim().toLowerCase();
 
-  const matchesSearch =
-    product.title.toLowerCase().includes(search) ||
-    product.slug.toLowerCase().includes(search);
+    const matchesSearch =
+      product.title.toLowerCase().includes(search) ||
+      product.slug.toLowerCase().includes(search);
 
-  const matchesCategory =
-    selectedCategory === "all" ||
-    product.category === selectedCategory;
+    const matchesCategory =
+      selectedCategory === "all" || product.category === selectedCategory;
 
-  const matchesStatus =
-    selectedStatus === "all" ||
-    product.status === selectedStatus;
+    const matchesStatus =
+      selectedStatus === "all" || product.status === selectedStatus;
 
-  return matchesSearch && matchesCategory && matchesStatus;
-});
-  
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
   function openNewForm() {
     setForm(emptyForm);
     setEditingId(null);
@@ -175,10 +195,8 @@ const filteredProducts = products.filter((product) => {
       if (editingId) {
         setProducts((current) =>
           current.map((product) =>
-            product.id === editingId
-              ? { ...product, ...payload }
-              : product
-          )
+            product.id === editingId ? { ...product, ...payload } : product,
+          ),
         );
 
         setMessage("Product saved successfully.");
@@ -189,14 +207,17 @@ const filteredProducts = products.filter((product) => {
 
         if (!listResponse.ok) {
           throw new Error(
-            listData.message || "Product created, but the list could not refresh."
+            listData.message ||
+              "Product created, but the list could not refresh.",
           );
         }
 
-        setProducts(listData.products.map((product: Product & { _id?: string }) => ({
-          ...product,
-          id: product.id || product._id || "",
-        })));
+        setProducts(
+          listData.products.map((product: Product & { _id?: string }) => ({
+            ...product,
+            id: product.id || product._id || "",
+          })),
+        );
 
         setMessage("Product created successfully.");
       }
@@ -204,9 +225,7 @@ const filteredProducts = products.filter((product) => {
       closeForm();
       router.refresh();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Something went wrong."
-      );
+      setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -214,7 +233,7 @@ const filteredProducts = products.filter((product) => {
 
   async function handleDelete(product: Product) {
     const confirmed = window.confirm(
-      `Are you sure you want to permanently delete "${product.title}"?`
+      `Are you sure you want to permanently delete "${product.title}"?`,
     );
 
     if (!confirmed) return;
@@ -223,10 +242,9 @@ const filteredProducts = products.filter((product) => {
     setMessage("");
 
     try {
-      const response = await fetch(
-        `/api/admin/products/${product.id}`,
-        { method: "DELETE" }
-      );
+      const response = await fetch(`/api/admin/products/${product.id}`, {
+        method: "DELETE",
+      });
 
       const data = await response.json();
 
@@ -235,15 +253,82 @@ const filteredProducts = products.filter((product) => {
       }
 
       setProducts((current) =>
-        current.filter((item) => item.id !== product.id)
+        current.filter((item) => item.id !== product.id),
       );
 
       setMessage("Product deleted successfully.");
       router.refresh();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Something went wrong."
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    }
+  }
+
+  async function handleZipUpload(productId: string) {
+    const file = selectedFiles[productId];
+
+    if (!file) {
+      setError("Please select a ZIP file first.");
+      return;
+    }
+
+    setUploadingId(productId);
+    setError("");
+    setMessage("");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch(
+        `/api/admin/products/${productId}/download`,
+        {
+          method: "POST",
+          body: formData,
+        },
       );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Unable to upload ZIP file.");
+      }
+
+      if (!data.file) {
+        throw new Error(
+          "Upload succeeded but file information was not returned.",
+        );
+      }
+
+      setProducts((current) =>
+        current.map((product) =>
+          product.id === productId
+            ? {
+                ...product,
+                downloadFile: {
+                  ...data.file,
+                  uploadedAt: new Date(data.file.uploadedAt).toISOString(),
+                },
+              }
+            : product,
+        ),
+      );
+
+      setSelectedFiles((current) => ({
+        ...current,
+        [productId]: null,
+      }));
+
+      setMessage(`ZIP file "${data.file.fileName}" uploaded successfully.`);
+
+      router.refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong during ZIP upload.",
+      );
+    } finally {
+      setUploadingId(null);
     }
   }
 
@@ -378,25 +463,25 @@ const filteredProducts = products.filter((product) => {
             </div>
 
             <div className="sm:col-span-2">
-  <label className="mb-2 block text-sm text-slate-300">
-    Product Preview Image URL
-  </label>
+              <label className="mb-2 block text-sm text-slate-300">
+                Product Preview Image URL
+              </label>
 
-  <input
-    type="url"
-    maxLength={2048}
-    value={form.imageUrl}
-    onChange={(event) =>
-      setForm({ ...form, imageUrl: event.target.value })
-    }
-    placeholder="https://example.com/my-project-preview.jpg"
-    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-blue-500"
-  />
+              <input
+                type="url"
+                maxLength={2048}
+                value={form.imageUrl}
+                onChange={(event) =>
+                  setForm({ ...form, imageUrl: event.target.value })
+                }
+                placeholder="https://example.com/my-project-preview.jpg"
+                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-blue-500"
+              />
 
-  <p className="mt-2 text-xs text-slate-500">
-    Optional. Add a publicly accessible HTTPS image URL.
-  </p>
-</div>
+              <p className="mt-2 text-xs text-slate-500">
+                Optional. Add a publicly accessible HTTPS image URL.
+              </p>
+            </div>
 
             <div className="sm:col-span-2">
               <label className="mb-2 block text-sm text-slate-300">
@@ -423,15 +508,15 @@ const filteredProducts = products.filter((product) => {
                 onChange={(event) =>
                   setForm({ ...form, features: event.target.value })
                 }
-                placeholder={"User authentication\nAdmin dashboard\nResponsive design"}
+                placeholder={
+                  "User authentication\nAdmin dashboard\nResponsive design"
+                }
                 className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm text-slate-300">
-                Color
-              </label>
+              <label className="mb-2 block text-sm text-slate-300">Color</label>
               <input
                 required
                 maxLength={30}
@@ -491,59 +576,60 @@ const filteredProducts = products.filter((product) => {
       )}
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-  <input
-    type="search"
-    value={searchTerm}
-    onChange={(event) => setSearchTerm(event.target.value)}
-    placeholder="Search by project title or slug..."
-    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
-  />
+        <input
+          type="search"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          placeholder="Search by project title or slug..."
+          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+        />
 
-  <select
-    value={selectedCategory}
-    onChange={(event) => setSelectedCategory(event.target.value)}
-    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
-  >
-    <option value="all">All Categories</option>
-    {categories.map((category) => (
-      <option key={category} value={category}>
-        {category}
-      </option>
-    ))}
-  </select>
+        <select
+          value={selectedCategory}
+          onChange={(event) => setSelectedCategory(event.target.value)}
+          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+        >
+          <option value="all">All Categories</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
 
-  <select
-    value={selectedStatus}
-    onChange={(event) => setSelectedStatus(event.target.value)}
-    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
-  >
-    <option value="all">All Statuses</option>
-    <option value="active">Active</option>
-    <option value="coming-soon">Coming Soon</option>
-    <option value="draft">Draft</option>
-  </select>
+        <select
+          value={selectedStatus}
+          onChange={(event) => setSelectedStatus(event.target.value)}
+          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+        >
+          <option value="all">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="coming-soon">Coming Soon</option>
+          <option value="draft">Draft</option>
+        </select>
 
-  <button
-    type="button"
-    onClick={() => {
-      setSearchTerm("");
-      setSelectedCategory("all");
-      setSelectedStatus("all");
-    }}
-    className="rounded-lg border border-slate-700 px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-slate-800"
-  >
-    Clear Filters
-  </button>
-</div>
+        <button
+          type="button"
+          onClick={() => {
+            setSearchTerm("");
+            setSelectedCategory("all");
+            setSelectedStatus("all");
+          }}
+          className="rounded-lg border border-slate-700 px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-slate-800"
+        >
+          Clear Filters
+        </button>
+      </div>
 
-<div className="overflow-x-auto">
-  <table className="w-full min-w-175 text-left text-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-225 text-left text-sm">
           <thead>
             <tr className="border-b border-slate-800 text-slate-400">
               <th className="px-4 py-4 font-medium">Project</th>
               <th className="px-4 py-4 font-medium">Category</th>
               <th className="px-4 py-4 font-medium">Price</th>
               <th className="px-4 py-4 font-medium">Status</th>
+              <th className="px-4 py-4 font-medium">Project ZIP</th>
               <th className="px-4 py-4 font-medium">Actions</th>
             </tr>
           </thead>
@@ -558,9 +644,7 @@ const filteredProducts = products.filter((product) => {
                   {product.title}
                 </td>
 
-                <td className="px-4 py-4 text-slate-400">
-                  {product.category}
-                </td>
+                <td className="px-4 py-4 text-slate-400">{product.category}</td>
 
                 <td className="px-4 py-4 text-slate-300">
                   ${product.price.toFixed(2)}
@@ -574,6 +658,69 @@ const filteredProducts = products.filter((product) => {
                   >
                     {product.status}
                   </span>
+                </td>
+
+                <td className="px-4 py-4">
+                  <div className="min-w-52 space-y-3">
+                    {product.downloadFile ? (
+                      <div className="text-xs text-slate-400">
+                        <p className="font-medium text-emerald-400">
+                          ZIP uploaded · v{product.downloadFile.version}
+                        </p>
+
+                        <p className="mt-1 break-all">
+                          {product.downloadFile.fileName}
+                        </p>
+
+                        <p className="mt-1">
+                          {formatFileSize(product.downloadFile.fileSize)}
+                        </p>
+
+                        <p className="mt-1">
+                          Uploaded:{" "}
+                          {new Date(
+                            product.downloadFile.uploadedAt,
+                          ).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-amber-400">No ZIP uploaded</p>
+                    )}
+
+                    <input
+                      key={`${product.id}-${product.downloadFile?.version ?? 0}`}
+                      type="file"
+                      accept=".zip,application/zip"
+                      disabled={uploadingId !== null}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0] || null;
+
+                        setSelectedFiles((current) => ({
+                          ...current,
+                          [product.id]: file,
+                        }));
+
+                        setError("");
+                        setMessage("");
+                      }}
+                      className="block w-full text-xs text-slate-400 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-xs file:font-medium file:text-white hover:file:bg-slate-600"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => handleZipUpload(product.id)}
+                      disabled={
+                        !selectedFiles[product.id] || uploadingId !== null
+                      }
+                      className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {uploadingId === product.id
+                        ? "Uploading..."
+                        : product.downloadFile
+                          ? "Replace ZIP"
+                          : "Upload ZIP"}
+                    </button>
+                  </div>
                 </td>
 
                 <td className="px-4 py-4">
@@ -599,28 +746,24 @@ const filteredProducts = products.filter((product) => {
             ))}
 
             {filteredProducts.length === 0 && (
-  <tr>
-    <td
-      colSpan={5}
-      className="px-4 py-12 text-center text-slate-400"
-    >
-      {products.length === 0
-        ? "No products found. Create your first product above."
-        : "No products match your search or selected filters."}
-    </td>
-  </tr>
-)}
+              <tr>
+                <td
+                  colSpan={6}
+                  className="px-4 py-12 text-center text-slate-400"
+                >
+                  {products.length === 0
+                    ? "No products found. Create your first product above."
+                    : "No products match your search or selected filters."}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
-    
-
-    
-
       <p className="mt-4 text-sm text-slate-500">
-  Showing {filteredProducts.length} of {products.length} products.
-</p>
+        Showing {filteredProducts.length} of {products.length} products.
+      </p>
     </section>
   );
 }

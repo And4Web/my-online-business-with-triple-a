@@ -25,6 +25,8 @@ export default function OrderHistory() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [downloadError, setDownloadError] = useState("");
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchOrders() {
@@ -54,6 +56,43 @@ export default function OrderHistory() {
     fetchOrders();
   }, []);
 
+  async function handleDownload(orderId: string) {
+    try {
+      setDownloadError("");
+      setDownloadingId(orderId);
+
+      const response = await fetch(
+        `/api/orders/${orderId}/download`,
+        {
+          method: "GET",
+          cache: "no-store",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Unable to prepare your download."
+        );
+      }
+
+      if (!data.downloadUrl) {
+        throw new Error("The download link was not received.");
+      }
+
+      window.location.assign(data.downloadUrl);
+    } catch (error) {
+      setDownloadError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while downloading."
+      );
+    } finally {
+      setDownloadingId(null);
+    }
+  }
+
   return (
     <section className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-6">
       <h2 className="text-xl font-semibold">My Purchases</h2>
@@ -71,6 +110,12 @@ export default function OrderHistory() {
       {error && (
         <p role="alert" className="mt-6 text-sm text-red-400">
           {error}
+        </p>
+      )}
+
+      {downloadError && (
+        <p role="alert" className="mt-6 text-sm text-red-400">
+          {downloadError}
         </p>
       )}
 
@@ -114,11 +159,26 @@ export default function OrderHistory() {
                 </p>
               </div>
 
-              <span
-                className={`w-fit rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusStyles[order.paymentStatus]}`}
-              >
-                {order.paymentStatus}
-              </span>
+              <div className="flex flex-col items-start gap-3 sm:items-end">
+                <span
+                  className={`w-fit rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusStyles[order.paymentStatus]}`}
+                >
+                  {order.paymentStatus}
+                </span>
+
+                {order.paymentStatus === "paid" && (
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(order.id)}
+                    disabled={downloadingId !== null}
+                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {downloadingId === order.id
+                      ? "Preparing download..."
+                      : "Download ZIP"}
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

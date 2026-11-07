@@ -1,7 +1,8 @@
-
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 
 type AdminOrder = {
   id: string;
@@ -11,210 +12,404 @@ type AdminOrder = {
   productSlug: string;
   amount: number;
   currency: string;
-  paymentStatus: "pending" | "paid" | "failed" | "refunded";
+  paymentStatus: PaymentStatus;
   createdAt: string;
 };
 
 type OrdersResponse = {
   ok: boolean;
-  count: number;
-  orders: AdminOrder[];
   message?: string;
+  orders?: AdminOrder[];
+  count?: number;
+  statusCounts?: {
+    pending: number;
+    paid: number;
+    failed: number;
+    refunded: number;
+  };
 };
 
-const statusStyles: Record<AdminOrder["paymentStatus"], string> = {
-  pending: "border-amber-500/30 bg-amber-500/10 text-amber-400",
-  paid: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-  failed: "border-red-500/30 bg-red-500/10 text-red-400",
-  refunded: "border-slate-500/30 bg-slate-500/10 text-slate-400",
+const statusStyles: Record<PaymentStatus, string> = {
+  pending: "bg-yellow-100 text-yellow-800",
+  paid: "bg-green-100 text-green-800",
+  failed: "bg-red-100 text-red-800",
+  refunded: "bg-gray-100 text-gray-700",
 };
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [totalOrders, setTotalOrders] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [statusCounts, setStatusCounts] = useState({
+    pending: 0,
+    paid: 0,
+    failed: 0,
+    refunded: 0,
+  });
 
-  useEffect(() => {
-    let isMounted = true;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState("newest");
 
-    async function loadOrders() {
-      try {
-        const response = await fetch("/api/admin/orders", {
-          cache: "no-store",
-        });
+  // Fetch orders without changing React state.
+  const fetchOrders = useCallback(async (): Promise<OrdersResponse> => {
+    const response = await fetch("/api/admin/orders", {
+      cache: "no-store",
+    });
 
-        const data = (await response.json()) as OrdersResponse;
+    const data = (await response.json()) as OrdersResponse;
 
-        if (!response.ok || !data.ok) {
-          throw new Error(data.message || "Unable to load orders.");
-        }
-
-        if (isMounted) {
-          setOrders(data.orders);
-          setTotalOrders(data.count);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setError(
-            error instanceof Error
-              ? error.message
-              : "Something went wrong while loading orders."
-          );
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
+    if (!response.ok || !data.ok) {
+      throw new Error(data.message || "Unable to load orders.");
     }
 
-    void loadOrders();
-
-    return () => {
-      isMounted = false;
-    };
+    return data;
   }, []);
 
-  const pendingOrders = orders.filter(
-    (order) => order.paymentStatus === "pending"
-  ).length;
+  // Initial page load.
+  useEffect(() => {
+    let cancelled = false;
 
-  const paidOrders = orders.filter(
-    (order) => order.paymentStatus === "paid"
-  ).length;
+    fetchOrders()
+      .then((data) => {
+        if (cancelled) return;
 
-  const failedOrders = orders.filter(
-    (order) => order.paymentStatus === "failed"
-  ).length;
+        setOrders(data.orders || []);
+        setTotalOrders(data.count || 0);
+        setStatusCounts(
+          data.statusCounts || {
+            pending: 0,
+            paid: 0,
+            failed: 0,
+            refunded: 0,
+          },
+        );
+        setError("");
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
 
-  const refundedOrders = orders.filter(
-    (order) => order.paymentStatus === "refunded"
-  ).length;
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Something went wrong while loading orders.",
+        );
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
 
-  const stats = [
-    { title: "Total Orders", value: totalOrders },
-    { title: "Pending", value: pendingOrders },
-    { title: "Paid", value: paidOrders },
-    { title: "Failed", value: failedOrders },
-    { title: "Refunded", value: refundedOrders },
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchOrders]);
+
+  // Refresh button handler.
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setError("");
+
+    try {
+      const data = await fetchOrders();
+
+      setOrders(data.orders || []);
+      setTotalOrders(data.count || 0);
+      setStatusCounts(
+        data.statusCounts || {
+          pending: 0,
+          paid: 0,
+          failed: 0,
+          refunded: 0,
+        },
+      );
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while refreshing orders.",
+      );
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const pendingOrders = statusCounts.pending;
+  const paidOrders = statusCounts.paid;
+  const failedOrders = statusCounts.failed;
+  const refundedOrders = statusCounts.refunded;
+
+  const filteredOrders = useMemo(() => {
+    let result = [...orders];
+
+    if (statusFilter !== "all") {
+      result = result.filter((order) => order.paymentStatus === statusFilter);
+    }
+
+    const query = searchQuery.trim().toLowerCase();
+
+    if (query) {
+      result = result.filter((order) => {
+        return (
+          order.id.toLowerCase().includes(query) ||
+          order.userId.toLowerCase().includes(query) ||
+          order.productTitle.toLowerCase().includes(query) ||
+          order.productSlug.toLowerCase().includes(query)
+        );
+      });
+    }
+
+    result.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+
+      return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+    });
+
+    return result;
+  }, [orders, searchQuery, statusFilter, sortOrder]);
+
+  const formatAmount = (amount: number, currency: string) => {
+    try {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: currency || "USD",
+      }).format(amount);
+    } catch {
+      return `${currency || "USD"} ${amount.toFixed(2)}`;
+    }
+  };
+
+  const formatDate = (date: string) => {
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "Invalid date";
+    }
+
+    return parsedDate.toLocaleString();
+  };
+
+  const statistics = [
+    {
+      label: "Total Orders",
+      value: totalOrders,
+      description: "All orders",
+      style: "text-white",
+    },
+    {
+      label: "Pending",
+      value: pendingOrders,
+      description: "In loaded orders",
+      style: "text-yellow-600",
+    },
+    {
+      label: "Paid",
+      value: paidOrders,
+      description: "In loaded orders",
+      style: "text-green-600",
+    },
+    {
+      label: "Failed",
+      value: failedOrders,
+      description: "In loaded orders",
+      style: "text-red-600",
+    },
+    {
+      label: "Refunded",
+      value: refundedOrders,
+      description: "In loaded orders",
+      style: "text-gray-600",
+    },
   ];
 
   return (
-    <section className="mt-12">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold">Order Management</h2>
-        <p className="mt-2 text-sm text-slate-400">
-          Monitor customer orders and payment statuses.
-        </p>
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white">Order Management</h2>
+          <p className="mt-1 text-sm text-gray-400">
+            Review customer orders and monitor payment statuses.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {refreshing ? "Refreshing..." : "Refresh Orders"}
+        </button>
       </div>
 
-      {loading ? (
-        <p className="rounded-xl border border-slate-800 bg-slate-900 p-6 text-slate-400">
-          Loading orders...
-        </p>
-      ) : error ? (
-        <p
-          role="alert"
-          className="rounded-xl border border-red-900 bg-red-950/30 p-6 text-red-300"
-        >
-          {error}
-        </p>
-      ) : (
-        <>
-          <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            {stats.map((stat) => (
-              <div
-                key={stat.title}
-                className="rounded-2xl border border-slate-800 bg-slate-900 p-5"
-              >
-                <p className="text-sm text-slate-400">{stat.title}</p>
-                <p className="mt-3 text-3xl font-bold">{stat.value}</p>
-              </div>
-            ))}
-          </div>
+      {error && (
+        <div className="flex flex-col gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-red-400">{error}</p>
 
-          <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
-            <div className="border-b border-slate-800 p-5">
-              <h3 className="font-semibold">Recent Customer Orders</h3>
-              <p className="mt-1 text-xs text-slate-500">
-                Showing the latest {orders.length} orders.
-              </p>
-            </div>
-
-            {orders.length === 0 ? (
-              <p className="p-8 text-center text-slate-400">
-                No customer orders have been placed yet.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-225 text-left text-sm">
-                  <thead className="bg-slate-950/70 text-slate-400">
-                    <tr>
-                      <th className="px-5 py-4 font-medium">Order ID</th>
-                      <th className="px-5 py-4 font-medium">Customer ID</th>
-                      <th className="px-5 py-4 font-medium">Project</th>
-                      <th className="px-5 py-4 font-medium">Amount</th>
-                      <th className="px-5 py-4 font-medium">Status</th>
-                      <th className="px-5 py-4 font-medium">Order Date</th>
-                    </tr>
-                  </thead>
-
-                  <tbody className="divide-y divide-slate-800">
-                    {orders.map((order) => (
-                      <tr
-                        key={order.id}
-                        className="transition hover:bg-slate-800/40"
-                      >
-                        <td className="px-5 py-4 font-mono text-xs text-slate-400">
-                          {order.id.slice(-8)}
-                        </td>
-
-                        <td className="px-5 py-4 font-mono text-xs text-slate-400">
-                          {order.userId.slice(-8)}
-                        </td>
-
-                        <td className="px-5 py-4 font-medium text-white">
-                          {order.productTitle}
-                        </td>
-
-                        <td className="px-5 py-4 text-slate-300">
-                          {new Intl.NumberFormat("en-US", {
-                            style: "currency",
-                            currency: order.currency,
-                          }).format(order.amount)}
-                        </td>
-
-                        <td className="px-5 py-4">
-                          <span
-                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold capitalize ${
-                              statusStyles[order.paymentStatus]
-                            }`}
-                          >
-                            {order.paymentStatus}
-                          </span>
-                        </td>
-
-                        <td className="px-5 py-4 text-slate-400">
-                          {new Date(order.createdAt).toLocaleDateString(
-                            "en-US",
-                            {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            }
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </>
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="text-sm font-medium text-red-300 underline hover:text-red-200"
+          >
+            Try again
+          </button>
+        </div>
       )}
-    </section>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {statistics.map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-xl border border-gray-800 bg-gray-900 p-5"
+          >
+            <p className="text-sm text-gray-400">{stat.label}</p>
+
+            <p className={`mt-2 text-3xl font-bold ${stat.style}`}>
+              {loading ? "..." : stat.value.toLocaleString()}
+            </p>
+
+            <p className="mt-1 text-xs text-gray-500">{stat.description}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search order ID, customer ID or project..."
+            className="min-w-0 flex-1 rounded-lg border border-gray-700 bg-gray-950 px-4 py-2.5 text-sm text-white outline-none placeholder:text-gray-500 focus:border-blue-500"
+          />
+
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="rounded-lg border border-gray-700 bg-gray-950 px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500"
+          >
+            <option value="all">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+            <option value="failed">Failed</option>
+            <option value="refunded">Refunded</option>
+          </select>
+
+          <select
+            value={sortOrder}
+            onChange={(event) => setSortOrder(event.target.value)}
+            className="rounded-lg border border-gray-700 bg-gray-950 px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
+        </div>
+
+        <div className="mb-4 flex flex-col gap-2 text-sm text-gray-400 sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            Showing {filteredOrders.length} of {orders.length} loaded orders
+          </p>
+
+          <p>Total orders: {totalOrders}</p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-212.5 text-left text-sm">
+            <thead>
+              <tr className="border-b border-gray-800 text-xs uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-4 font-medium">Order ID</th>
+                <th className="px-4 py-4 font-medium">Customer ID</th>
+                <th className="px-4 py-4 font-medium">Project</th>
+                <th className="px-4 py-4 font-medium">Amount</th>
+                <th className="px-4 py-4 font-medium">Status</th>
+                <th className="px-4 py-4 font-medium">Date</th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-gray-800">
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-4 py-12 text-center text-gray-400"
+                  >
+                    Loading orders...
+                  </td>
+                </tr>
+              ) : filteredOrders.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-4 py-12 text-center text-gray-400"
+                  >
+                    {orders.length === 0
+                      ? "No orders found."
+                      : "No orders match your search or filter."}
+
+                    {orders.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setStatusFilter("all");
+                        }}
+                        className="ml-2 text-blue-400 hover:text-blue-300"
+                      >
+                        Clear filters
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ) : (
+                filteredOrders.map((order) => (
+                  <tr
+                    key={order.id}
+                    className="transition hover:bg-gray-800/50"
+                  >
+                    <td className="whitespace-nowrap px-4 py-4 font-mono text-gray-300">
+                      ...{order.id.slice(-8)}
+                    </td>
+
+                    <td className="whitespace-nowrap px-4 py-4 font-mono text-gray-400">
+                      ...{order.userId.slice(-8)}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <p className="font-medium text-white">
+                        {order.productTitle}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {order.productSlug}
+                      </p>
+                    </td>
+
+                    <td className="whitespace-nowrap px-4 py-4 text-gray-300">
+                      {formatAmount(order.amount, order.currency)}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium capitalize ${statusStyles[order.paymentStatus]}`}
+                      >
+                        {order.paymentStatus}
+                      </span>
+                    </td>
+
+                    <td className="whitespace-nowrap px-4 py-4 text-gray-400">
+                      {formatDate(order.createdAt)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }
-

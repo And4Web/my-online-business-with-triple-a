@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     await dbConnect();
 
     // Retrieve the latest 100 orders
-    const orders = await Order.find({})
+    const ordersPromise = Order.find({})
       .select(
         "userId productId productTitle productSlug amount currency paymentStatus createdAt"
       )
@@ -24,23 +24,51 @@ export async function GET(request: Request) {
       .limit(100)
       .lean();
 
-    const count = await Order.countDocuments();
+    // Count all orders and each payment status
+    const [
+      orders,
+      totalOrders,
+      pendingOrders,
+      paidOrders,
+      failedOrders,
+      refundedOrders,
+    ] = await Promise.all([
+      ordersPromise,
+      Order.countDocuments(),
+      Order.countDocuments({ paymentStatus: "pending" }),
+      Order.countDocuments({ paymentStatus: "paid" }),
+      Order.countDocuments({ paymentStatus: "failed" }),
+      Order.countDocuments({ paymentStatus: "refunded" }),
+    ]);
 
-    return NextResponse.json({
-      ok: true,
-      count,
-      orders: orders.map((order) => ({
-        id: order._id.toString(),
-        userId: order.userId,
-        productId: order.productId.toString(),
-        productTitle: order.productTitle,
-        productSlug: order.productSlug,
-        amount: order.amount,
-        currency: order.currency,
-        paymentStatus: order.paymentStatus,
-        createdAt: order.createdAt,
-      })),
-    });
+    return NextResponse.json(
+      {
+        ok: true,
+        count: totalOrders,
+        statusCounts: {
+          pending: pendingOrders,
+          paid: paidOrders,
+          failed: failedOrders,
+          refunded: refundedOrders,
+        },
+        orders: orders.map((order) => ({
+          id: order._id.toString(),
+          userId: order.userId,
+          productId: order.productId.toString(),
+          productTitle: order.productTitle,
+          productSlug: order.productSlug,
+          amount: order.amount,
+          currency: order.currency,
+          paymentStatus: order.paymentStatus,
+          createdAt: order.createdAt,
+        })),
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
+    );
   } catch (error) {
     console.error("Admin order listing failed:", error);
 

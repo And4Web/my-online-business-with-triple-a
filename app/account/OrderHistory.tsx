@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -20,6 +19,17 @@ const statusStyles: Record<Order["paymentStatus"], string> = {
   failed: "bg-red-500/10 text-red-400",
   refunded: "bg-slate-500/10 text-slate-300",
 };
+
+function formatAmount(amount: number, currency: string) {
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+    }).format(amount);
+  } catch {
+    return `${amount.toFixed(2)} ${currency}`;
+  }
+}
 
 export default function OrderHistory() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -46,7 +56,7 @@ export default function OrderHistory() {
         setError(
           error instanceof Error
             ? error.message
-            : "Something went wrong while loading orders."
+            : "Something went wrong while loading orders.",
         );
       } finally {
         setLoading(false);
@@ -61,20 +71,15 @@ export default function OrderHistory() {
       setDownloadError("");
       setDownloadingId(orderId);
 
-      const response = await fetch(
-        `/api/orders/${orderId}/download`,
-        {
-          method: "GET",
-          cache: "no-store",
-        }
-      );
+      const response = await fetch(`/api/orders/${orderId}/download`, {
+        method: "GET",
+        cache: "no-store",
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || "Unable to prepare your download."
-        );
+        throw new Error(data.message || "Unable to prepare your download.");
       }
 
       if (!data.downloadUrl) {
@@ -86,7 +91,7 @@ export default function OrderHistory() {
       setDownloadError(
         error instanceof Error
           ? error.message
-          : "Something went wrong while downloading."
+          : "Something went wrong while downloading.",
       );
     } finally {
       setDownloadingId(null);
@@ -95,16 +100,14 @@ export default function OrderHistory() {
 
   return (
     <section className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-      <h2 className="text-xl font-semibold">My Purchases</h2>
+      <h2 className="text-xl font-semibold">My Orders</h2>
 
       <p className="mt-2 text-sm text-slate-400">
-        View your Nexora orders and their payment status.
+        Track your Nexora orders, payment status, and available downloads.
       </p>
 
       {loading && (
-        <p className="mt-6 text-sm text-slate-400">
-          Loading your orders...
-        </p>
+        <p className="mt-6 text-sm text-slate-400">Loading your orders...</p>
       )}
 
       {error && (
@@ -121,7 +124,7 @@ export default function OrderHistory() {
 
       {!loading && !error && orders.length === 0 && (
         <div className="mt-6 rounded-xl border border-slate-800 bg-slate-950/50 p-5">
-          <p className="font-medium text-white">No purchases yet</p>
+          <p className="font-medium text-white">No orders yet</p>
           <p className="mt-2 text-sm text-slate-400">
             Your orders will appear here after you place your first order.
           </p>
@@ -150,12 +153,11 @@ export default function OrderHistory() {
                 </Link>
 
                 <p className="mt-2 text-sm text-slate-500">
-                  Order date:{" "}
-                  {new Date(order.createdAt).toLocaleDateString()}
+                  Order date: {new Date(order.createdAt).toLocaleDateString()}
                 </p>
 
                 <p className="mt-1 text-sm font-medium text-slate-300">
-                  ${order.amount.toFixed(2)} {order.currency}
+                  {formatAmount(order.amount, order.currency)}
                 </p>
               </div>
 

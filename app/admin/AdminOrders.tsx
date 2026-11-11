@@ -203,25 +203,25 @@ export default function AdminOrders() {
     {
       label: "Pending",
       value: pendingOrders,
-      description: "In loaded orders",
+      description: "Across all orders",
       style: "text-yellow-600",
     },
     {
       label: "Paid",
       value: paidOrders,
-      description: "In loaded orders",
+      description: "Across all orders",
       style: "text-green-600",
     },
     {
       label: "Failed",
       value: failedOrders,
-      description: "In loaded orders",
+      description: "Across all orders",
       style: "text-red-600",
     },
     {
       label: "Refunded",
       value: refundedOrders,
-      description: "In loaded orders",
+      description: "Across all orders",
       style: "text-gray-600",
     },
   ];
@@ -319,7 +319,7 @@ export default function AdminOrders() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-212.5 text-left text-sm">
+          <table className="w-full min-w-[850px] text-left text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-xs uppercase tracking-wider text-gray-500">
                 <th className="px-4 py-4 font-medium">Order ID</th>

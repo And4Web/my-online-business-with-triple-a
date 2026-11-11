@@ -87,17 +87,6 @@ async function ProtectedAccountPage() {
           </section>
         </div>
 
-        {/* <section className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-          <h2 className="text-xl font-semibold">
-            My Purchases
-          </h2>
-
-          <p className="mt-3 text-sm text-slate-400">
-            Your purchase history will appear here once our order
-            management system is ready.
-          </p>
-        </section> */}
-
         <OrderHistory />
 
         <div className="mt-8 flex flex-col gap-4 border-t border-slate-800 pt-6 sm:flex-row sm:items-center sm:justify-between">

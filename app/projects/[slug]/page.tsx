@@ -1,4 +1,4 @@
-
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
@@ -13,6 +13,75 @@ type ProjectDetailPageProps = {
     slug: string;
   }>;
 };
+
+
+export async function generateMetadata({
+  params,
+}: ProjectDetailPageProps): Promise<Metadata> {
+  const { slug } = await params;
+
+  try {
+    await dbConnect();
+
+    const product = await Product.findOne({
+      slug,
+      status: { $in: ["active", "coming-soon"] },
+    })
+      .select("title description imageUrl")
+      .lean();
+
+    if (!product) {
+      return {
+        title: "Project Not Found",
+        robots: {
+          index: false,
+          follow: false,
+        },
+      };
+    }
+
+    const description =
+      product.description.length > 155
+        ? `${product.description.slice(0, 152)}...`
+        : product.description;
+
+    return {
+      title: product.title,
+      description,
+      alternates: {
+        canonical: `/projects/${slug}`,
+      },
+      openGraph: {
+        title: `${product.title} | Nexora`,
+        description,
+        url: `/projects/${slug}`,
+        siteName: "Nexora",
+        type: "website",
+        ...(product.imageUrl
+          ? { images: [product.imageUrl] }
+          : {}),
+      },
+      twitter: {
+        card: product.imageUrl
+          ? "summary_large_image"
+          : "summary",
+        title: `${product.title} | Nexora`,
+        description,
+        ...(product.imageUrl
+          ? { images: [product.imageUrl] }
+          : {}),
+      },
+    };
+  } catch (error) {
+    console.error("Failed to generate project metadata:", error);
+
+    return {
+      title: "Project Details",
+      description: "Explore ready-made software projects at Nexora.",
+    };
+  }
+}
+
 
 async function ProjectDetails({ slug }: { slug: string }) {
   await connection();

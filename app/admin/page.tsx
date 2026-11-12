@@ -1,9 +1,19 @@
 
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "../lib/auth";
 import AdminDashboardData from "./AdminDashboardData";
+
+export const metadata: Metadata = {
+  title: "Admin Dashboard",
+  description: "Nexora administration dashboard.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 async function ProtectedAdminDashboard() {
   const session = await auth.api.getSession({
@@ -11,12 +21,12 @@ async function ProtectedAdminDashboard() {
   });
 
   if (!session) {
-  redirect("/sign-in");
-}
+    redirect("/sign-in");
+  }
 
-if (session.user.role !== "admin") {
-  redirect("/");
-}
+  if (session.user.role !== "admin") {
+    redirect("/");
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-10 text-white sm:px-6 lg:px-8">
@@ -44,8 +54,6 @@ if (session.user.role !== "admin") {
         >
           <AdminDashboardData />
         </Suspense>
-
-        
       </div>
     </main>
   );

@@ -1,4 +1,5 @@
 
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -7,6 +8,14 @@ import { auth } from "../lib/auth";
 import SignOutButton from "./SignOutButton";
 import OrderHistory from "./OrderHistory";
 
+export const metadata: Metadata = {
+  title: "My Account",
+  description: "Manage your Nexora customer account and purchases.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 async function ProtectedAccountPage() {
   const session = await auth.api.getSession({

@@ -3,10 +3,28 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Refund & Cancellation Policy | Nexora",
+  title: "Refund & Cancellation Policy",
   description:
-    "Read the refund, cancellation, and digital product support policy for Nexora, operated by Divine flame IT Solutions.",
+    "Review Nexora's refund and cancellation policy for digital software purchases, including duplicate payments, failed delivery, technical issues, refund requests, and customer rights.",
+  alternates: {
+    canonical: "/refund",
+  },
+  openGraph: {
+    title: "Refund & Cancellation Policy | Nexora",
+    description:
+      "Understand how Nexora handles digital product refunds, order cancellations, payment issues, and customer support.",
+    url: "/refund",
+    siteName: "Nexora",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Refund & Cancellation Policy | Nexora",
+    description:
+      "Read Nexora's refund, cancellation, and digital product support policy.",
+  },
 };
+
 
 const lastUpdated = "November 11, 2026";
 

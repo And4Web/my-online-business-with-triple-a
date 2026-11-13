@@ -4,11 +4,55 @@
 import { useState, type FormEvent } from "react";
 
 export default function ContactPage() {
-  const [submitted, setSubmitted] = useState(false);
+  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitted(true);
+
+    if (status === "sending") return;
+
+    setStatus("sending");
+    setErrorMessage("");
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    const payload = {
+      name: formData.get("name"),
+      email: formData.get("email"),
+      subject: formData.get("subject"),
+      message: formData.get("message"),
+      website: formData.get("website"),
+    };
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message || "Unable to send your message. Please try again."
+        );
+      }
+
+      form.reset();
+      setStatus("success");
+    } catch (error) {
+      setStatus("error");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again later."
+      );
+    }
   }
 
   return (
@@ -53,9 +97,12 @@ export default function ContactPage() {
                 assistance, or other business-related queries.
               </p>
 
-              <p className="mt-auto break-words pt-5 text-sm font-medium text-blue-400">
-                XXXX
-              </p>
+              <a
+                href="mailto:support@and4web.co.in"
+                className="mt-auto wrap-break-words pt-5 text-sm font-medium text-blue-400 hover:text-blue-300"
+              >
+                support@and4web.co.in
+              </a>
 
               <p className="mt-2 text-xs text-slate-500">
                 Official business email address
@@ -120,37 +167,40 @@ export default function ContactPage() {
               </h2>
 
               <p className="mt-2 text-sm leading-6 text-slate-400">
-                Complete the form below with your inquiry. Our
-                contact form will be connected to secure email
-                delivery before the website launches.
+                Complete the form below with your inquiry.
+                Your message will be sent securely to our business
+                support team.
               </p>
 
-              {submitted ? (
+              {status === "success" ? (
                 <div
                   role="status"
-                  className="mt-8 rounded-xl border border-blue-500/30 bg-blue-500/10 p-5"
+                  className="mt-8 rounded-xl border border-green-500/30 bg-green-500/10 p-5"
                 >
-                  <h3 className="font-semibold text-blue-300">
-                    Form demonstration complete
+                  <h3 className="font-semibold text-green-300">
+                    Message sent successfully!
                   </h3>
 
                   <p className="mt-2 text-sm leading-6 text-slate-300">
-                    Your form submission was received by the
-                    demonstration interface, but no email has
-                    been sent. Secure message delivery will be
-                    configured before launch.
+                    Thank you for contacting Nexora. Your enquiry
+                    has been submitted to our support team.
+                    We appreciate your interest and will get back
+                    to you as soon as possible.
                   </p>
 
                   <button
                     type="button"
-                    onClick={() => setSubmitted(false)}
+                    onClick={() => setStatus("idle")}
                     className="mt-4 text-sm font-semibold text-blue-400 transition hover:text-blue-300"
                   >
-                    Return to the form
+                    Send another message
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+                <form
+                  onSubmit={handleSubmit}
+                  className="mt-8 space-y-5"
+                >
 
                   {/* Name */}
                   <div>
@@ -257,12 +307,40 @@ export default function ContactPage() {
                     />
                   </div>
 
+                  {/* Hidden honeypot spam field */}
+                  <div className="hidden" aria-hidden="true">
+                    <label htmlFor="website">
+                      Leave this field empty
+                    </label>
+
+                    <input
+                      id="website"
+                      name="website"
+                      type="text"
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+                  </div>
+
+                  {/* Error message */}
+                  {status === "error" && (
+                    <div
+                      role="alert"
+                      className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm leading-6 text-red-300"
+                    >
+                      {errorMessage}
+                    </div>
+                  )}
+
                   {/* Submit */}
                   <button
                     type="submit"
-                    className="w-full rounded-xl bg-blue-500 px-6 py-4 font-bold text-white transition hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+                    disabled={status === "sending"}
+                    className="w-full rounded-xl bg-blue-500 px-6 py-4 font-bold text-white transition hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Submit Message →
+                    {status === "sending"
+                      ? "Sending message..."
+                      : "Submit Message →"}
                   </button>
 
                   <p className="text-xs leading-5 text-slate-500">

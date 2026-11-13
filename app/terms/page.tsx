@@ -1,10 +1,28 @@
 
+import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata = {
-  title: "Terms & Conditions | Nexora",
+export const metadata: Metadata = {
+  title: "Terms & Conditions",
   description:
-    "Read the terms and conditions governing the use of Nexora and purchases made through our digital software marketplace.",
+    "Read the terms and conditions governing the use of Nexora, including customer accounts, digital software purchases, payments, downloads, licensing and refunds.",
+  alternates: {
+    canonical: "/terms",
+  },
+  openGraph: {
+    title: "Terms & Conditions | Nexora",
+    description:
+      "Review the terms governing access to Nexora and purchases made through our digital software marketplace.",
+    url: "/terms",
+    siteName: "Nexora",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Terms & Conditions | Nexora",
+    description:
+      "Read the terms governing the use of Nexora and purchases through our marketplace.",
+  },
 };
 
 const lastUpdated = "November 11, 2026";

@@ -1,11 +1,24 @@
 
+import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "About Us | Nexora",
   description:
     "Learn about Nexora, a digital software marketplace operated by Divine flame IT Solutions.",
+  alternates: {
+    canonical: "/about",
+  },
+  openGraph: {
+    title: "About Us | Nexora",
+    description:
+      "Learn about Nexora and Divine flame IT Solutions, the business behind this digital software marketplace.",
+    url: "/about",
+    siteName: "Nexora",
+    type: "website",
+  },
 };
+
 
 export default function AboutPage() {
   return (
@@ -14,7 +27,7 @@ export default function AboutPage() {
       <section className="relative overflow-hidden border-b border-slate-800">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-0 -z-0 h-80 w-80 -translate-x-1/2 rounded-full bg-blue-600/10 blur-3xl"
+          className="pointer-events-none absolute left-1/2 top-0 z-0 h-80 w-80 -translate-x-1/2 rounded-full bg-blue-600/10 blur-3xl"
         />
 
         <div className="relative mx-auto max-w-6xl px-6 py-24 sm:py-32">

@@ -3,10 +3,28 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Nexora",
+  title: "Privacy Policy",
   description:
-    "Learn how Nexora, operated by Divine flame IT Solutions, collects, uses, stores, and protects personal information.",
+    "Learn how Nexora, operated by Divine flame IT Solutions, collects, uses, stores, and protects personal information, including account, order, and customer support data.",
+  alternates: {
+    canonical: "/privacy",
+  },
+  openGraph: {
+    title: "Privacy Policy | Nexora",
+    description:
+      "Understand how Nexora handles personal information, customer accounts, orders, data storage, security, and privacy requests.",
+    url: "/privacy",
+    siteName: "Nexora",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Privacy Policy | Nexora",
+    description:
+      "Learn how Nexora collects, uses, stores, and protects customer information.",
+  },
 };
+
 
 const lastUpdated = "November 11, 2026";
 

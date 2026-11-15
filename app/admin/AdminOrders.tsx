@@ -319,7 +319,7 @@ export default function AdminOrders() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[850px] text-left text-sm">
+          <table className="w-full min-w-212.5 text-left text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-xs uppercase tracking-wider text-gray-500">
                 <th className="px-4 py-4 font-medium">Order ID</th>

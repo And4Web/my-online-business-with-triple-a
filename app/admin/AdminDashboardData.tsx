@@ -4,6 +4,8 @@ import Product from "../lib/models/Product";
 import ProductManagement from "./ProductManagement";
 import AdminOrders from "./AdminOrders";
 
+import AdminInvoices from "./AdminInvoices";
+
 async function loadProducts() {
   try {
     await dbConnect();
@@ -124,8 +126,8 @@ export default async function AdminDashboardData() {
       </section>
 
       <ProductManagement initialProducts={products} />
-
       <AdminOrders />
+      <AdminInvoices />
     </>
   );
 }

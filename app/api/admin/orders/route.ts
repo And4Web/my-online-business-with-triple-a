@@ -15,16 +15,16 @@ export async function GET(request: Request) {
 
     await dbConnect();
 
-    // Retrieve the latest 100 orders
+    // Retrieve the latest 100 orders, including all products.
     const ordersPromise = Order.find({})
       .select(
-        "userId productId productTitle productSlug amount currency paymentStatus createdAt"
+        "userId productId productTitle productSlug items amount currency paymentStatus createdAt"
       )
       .sort({ createdAt: -1 })
       .limit(100)
       .lean();
 
-    // Count all orders and each payment status
+    // Count all orders and each payment status.
     const [
       orders,
       totalOrders,
@@ -57,6 +57,17 @@ export async function GET(request: Request) {
           productId: order.productId.toString(),
           productTitle: order.productTitle,
           productSlug: order.productSlug,
+
+          // Include every product in a combined order.
+          items: Array.isArray(order.items)
+            ? order.items.map((item) => ({
+                productId: item.productId.toString(),
+                productTitle: item.productTitle,
+                productSlug: item.productSlug,
+                price: item.price,
+              }))
+            : [],
+
           amount: order.amount,
           currency: order.currency,
           paymentStatus: order.paymentStatus,

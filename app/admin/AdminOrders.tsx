@@ -1,8 +1,16 @@
+
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
+
+type AdminOrderItem = {
+  productId: string;
+  productTitle: string;
+  productSlug: string;
+  price: number;
+};
 
 type AdminOrder = {
   id: string;
@@ -10,6 +18,7 @@ type AdminOrder = {
   productId: string;
   productTitle: string;
   productSlug: string;
+  items?: AdminOrderItem[];
   amount: number;
   currency: string;
   paymentStatus: PaymentStatus;
@@ -42,6 +51,7 @@ export default function AdminOrders() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+
   const [statusCounts, setStatusCounts] = useState({
     pending: 0,
     paid: 0,
@@ -53,7 +63,6 @@ export default function AdminOrders() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("newest");
 
-  // Fetch orders without changing React state.
   const fetchOrders = useCallback(async (): Promise<OrdersResponse> => {
     const response = await fetch("/api/admin/orders", {
       cache: "no-store",
@@ -68,7 +77,6 @@ export default function AdminOrders() {
     return data;
   }, []);
 
-  // Initial page load.
   useEffect(() => {
     let cancelled = false;
 
@@ -78,6 +86,7 @@ export default function AdminOrders() {
 
         setOrders(data.orders || []);
         setTotalOrders(data.count || 0);
+
         setStatusCounts(
           data.statusCounts || {
             pending: 0,
@@ -86,6 +95,7 @@ export default function AdminOrders() {
             refunded: 0,
           },
         );
+
         setError("");
       })
       .catch((error: unknown) => {
@@ -108,7 +118,6 @@ export default function AdminOrders() {
     };
   }, [fetchOrders]);
 
-  // Refresh button handler.
   const handleRefresh = async () => {
     setRefreshing(true);
     setError("");
@@ -118,6 +127,7 @@ export default function AdminOrders() {
 
       setOrders(data.orders || []);
       setTotalOrders(data.count || 0);
+
       setStatusCounts(
         data.statusCounts || {
           pending: 0,
@@ -142,23 +152,46 @@ export default function AdminOrders() {
   const failedOrders = statusCounts.failed;
   const refundedOrders = statusCounts.refunded;
 
+  // Support both new multi-product orders and older single-product orders.
+  const getOrderItems = (order: AdminOrder): AdminOrderItem[] => {
+    if (order.items && order.items.length > 0) {
+      return order.items;
+    }
+
+    return [
+      {
+        productId: order.productId || order.id,
+        productTitle: order.productTitle,
+        productSlug: order.productSlug,
+        price: order.amount,
+      },
+    ];
+  };
+
   const filteredOrders = useMemo(() => {
     let result = [...orders];
 
     if (statusFilter !== "all") {
-      result = result.filter((order) => order.paymentStatus === statusFilter);
+      result = result.filter(
+        (order) => order.paymentStatus === statusFilter,
+      );
     }
 
     const query = searchQuery.trim().toLowerCase();
 
     if (query) {
       result = result.filter((order) => {
-        return (
+        const matchesOrder =
           order.id.toLowerCase().includes(query) ||
-          order.userId.toLowerCase().includes(query) ||
-          order.productTitle.toLowerCase().includes(query) ||
-          order.productSlug.toLowerCase().includes(query)
+          order.userId.toLowerCase().includes(query);
+
+        const matchesProducts = getOrderItems(order).some(
+          (item) =>
+            item.productTitle.toLowerCase().includes(query) ||
+            item.productSlug.toLowerCase().includes(query),
         );
+
+        return matchesOrder || matchesProducts;
       });
     }
 
@@ -166,7 +199,9 @@ export default function AdminOrders() {
       const dateA = new Date(a.createdAt).getTime();
       const dateB = new Date(b.createdAt).getTime();
 
-      return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+      return sortOrder === "newest"
+        ? dateB - dateA
+        : dateA - dateB;
     });
 
     return result;
@@ -230,7 +265,10 @@ export default function AdminOrders() {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Order Management</h2>
+          <h2 className="text-2xl font-bold text-white">
+            Order Management
+          </h2>
+
           <p className="mt-1 text-sm text-gray-400">
             Review customer orders and monitor payment statuses.
           </p>
@@ -273,7 +311,9 @@ export default function AdminOrders() {
               {loading ? "..." : stat.value.toLocaleString()}
             </p>
 
-            <p className="mt-1 text-xs text-gray-500">{stat.description}</p>
+            <p className="mt-1 text-xs text-gray-500">
+              {stat.description}
+            </p>
           </div>
         ))}
       </div>
@@ -284,7 +324,7 @@ export default function AdminOrders() {
             type="text"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Search order ID, customer ID or project..."
+            placeholder="Search order ID, customer ID or any project..."
             className="min-w-0 flex-1 rounded-lg border border-gray-700 bg-gray-950 px-4 py-2.5 text-sm text-white outline-none placeholder:text-gray-500 focus:border-blue-500"
           />
 
@@ -324,8 +364,8 @@ export default function AdminOrders() {
               <tr className="border-b border-gray-800 text-xs uppercase tracking-wider text-gray-500">
                 <th className="px-4 py-4 font-medium">Order ID</th>
                 <th className="px-4 py-4 font-medium">Customer ID</th>
-                <th className="px-4 py-4 font-medium">Project</th>
-                <th className="px-4 py-4 font-medium">Amount</th>
+                <th className="px-4 py-4 font-medium">Products</th>
+                <th className="px-4 py-4 font-medium">Order Total</th>
                 <th className="px-4 py-4 font-medium">Status</th>
                 <th className="px-4 py-4 font-medium">Date</th>
               </tr>
@@ -366,45 +406,68 @@ export default function AdminOrders() {
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="transition hover:bg-gray-800/50"
-                  >
-                    <td className="whitespace-nowrap px-4 py-4 font-mono text-gray-300">
-                      ...{order.id.slice(-8)}
-                    </td>
+                filteredOrders.map((order) => {
+                  const orderItems = getOrderItems(order);
 
-                    <td className="whitespace-nowrap px-4 py-4 font-mono text-gray-400">
-                      ...{order.userId.slice(-8)}
-                    </td>
+                  return (
+                    <tr
+                      key={order.id}
+                      className="transition hover:bg-gray-800/50"
+                    >
+                      <td className="whitespace-nowrap px-4 py-4 font-mono text-gray-300">
+                        ...{order.id.slice(-8)}
+                      </td>
 
-                    <td className="px-4 py-4">
-                      <p className="font-medium text-white">
-                        {order.productTitle}
-                      </p>
-                      <p className="mt-1 text-xs text-gray-500">
-                        {order.productSlug}
-                      </p>
-                    </td>
+                      <td className="whitespace-nowrap px-4 py-4 font-mono text-gray-400">
+                        ...{order.userId.slice(-8)}
+                      </td>
 
-                    <td className="whitespace-nowrap px-4 py-4 text-gray-300">
-                      {formatAmount(order.amount, order.currency)}
-                    </td>
+                      <td className="min-w-64 px-4 py-4">
+                        <p className="mb-3 text-xs font-semibold text-blue-400">
+                          {orderItems.length}{" "}
+                          {orderItems.length === 1 ? "product" : "products"}
+                        </p>
 
-                    <td className="px-4 py-4">
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium capitalize ${statusStyles[order.paymentStatus]}`}
-                      >
-                        {order.paymentStatus}
-                      </span>
-                    </td>
+                        <div className="space-y-3">
+                          {orderItems.map((item, index) => (
+                            <div
+                              key={`${item.productId}-${index}`}
+                              className="border-b border-gray-800 pb-3 last:border-0 last:pb-0"
+                            >
+                              <p className="font-medium text-white">
+                                {item.productTitle}
+                              </p>
 
-                    <td className="whitespace-nowrap px-4 py-4 text-gray-400">
-                      {formatDate(order.createdAt)}
-                    </td>
-                  </tr>
-                ))
+                              <p className="mt-1 text-xs text-gray-500">
+                                {item.productSlug}
+                              </p>
+
+                              <p className="mt-1 text-xs text-gray-400">
+                                {formatAmount(item.price, order.currency)}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+
+                      <td className="whitespace-nowrap px-4 py-4 font-semibold text-white">
+                        {formatAmount(order.amount, order.currency)}
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium capitalize ${statusStyles[order.paymentStatus]}`}
+                        >
+                          {order.paymentStatus}
+                        </span>
+                      </td>
+
+                      <td className="whitespace-nowrap px-4 py-4 text-gray-400">
+                        {formatDate(order.createdAt)}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

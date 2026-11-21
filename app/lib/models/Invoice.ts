@@ -3,32 +3,44 @@ import mongoose, { Schema, type Model } from "mongoose";
 
 export type InvoiceStatus = "generating" | "ready" | "failed";
 
+export interface IInvoiceItem {
+  productId: mongoose.Types.ObjectId;
+  title: string;
+  slug: string;
+  price: number;
+}
+
 export interface IInvoice {
   invoiceNumber: string;
 
-  // One invoice belongs to exactly one order.
   orderId: mongoose.Types.ObjectId;
   userId: string;
 
-  // Seller identity captured when the invoice is created.
   seller: {
     name: string;
+    legalName?: string;
     website: string;
     managedBy: string;
+    gstin?: string;
+    sacCode?: string;
+    registeredAddress?: string;
   };
 
-  // Customer details captured at invoice creation.
   customer: {
     name: string;
     email: string;
     billingAddress?: string;
+    country?: string;
   };
 
-  // Product and transaction snapshot.
+  // Retained for compatibility with existing invoices.
   product: {
     title: string;
     slug: string;
   };
+
+  // Supports combined multi-product orders.
+  items?: IInvoiceItem[];
 
   payment: {
     amount: number;
@@ -38,17 +50,18 @@ export interface IInvoice {
     paidAt: Date;
   };
 
-  // Tax fields remain optional until the actual tax treatment
-  // has been verified.
   tax: {
     applicable: boolean;
+    country?: string;
+    treatment?: "domestic" | "international";
     taxName?: string;
     taxRate?: number;
     taxAmount?: number;
+    subtotal?: number;
     totalAmount: number;
+    lutApplied?: boolean;
   };
 
-  // Private Backblaze B2 PDF storage information.
   pdf: {
     storageKey: string;
     fileName: string;
@@ -64,6 +77,33 @@ export interface IInvoice {
   updatedAt: Date;
 }
 
+const InvoiceItemSchema = new Schema<IInvoiceItem>(
+  {
+    productId: {
+      type: Schema.Types.ObjectId,
+      ref: "Product",
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    slug: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 49,
+    },
+  },
+  { _id: false }
+);
+
 const invoiceSchema = new Schema<IInvoice>(
   {
     invoiceNumber: {
@@ -71,6 +111,7 @@ const invoiceSchema = new Schema<IInvoice>(
       required: true,
       unique: true,
       trim: true,
+      maxlength: 16,
     },
 
     orderId: {
@@ -90,17 +131,33 @@ const invoiceSchema = new Schema<IInvoice>(
       name: {
         type: String,
         required: true,
-        default: "and4web.co.in",
+        default: "Divine Flame IT Solutions",
+      },
+      legalName: {
+        type: String,
+        trim: true,
       },
       website: {
         type: String,
         required: true,
-        default: "https://and4web.co.in",
+        default: "https://www.and4web.co.in",
       },
       managedBy: {
         type: String,
         required: true,
-        default: "Divine Flame IT Solutions",
+        default: "Anand Shukla",
+      },
+      gstin: {
+        type: String,
+        trim: true,
+      },
+      sacCode: {
+        type: String,
+        trim: true,
+      },
+      registeredAddress: {
+        type: String,
+        trim: true,
       },
     },
 
@@ -120,8 +177,13 @@ const invoiceSchema = new Schema<IInvoice>(
         type: String,
         trim: true,
       },
+      country: {
+        type: String,
+        trim: true,
+      },
     },
 
+    // Kept required for compatibility with existing invoice records.
     product: {
       title: {
         type: String,
@@ -133,6 +195,11 @@ const invoiceSchema = new Schema<IInvoice>(
         required: true,
         trim: true,
       },
+    },
+
+    items: {
+      type: [InvoiceItemSchema],
+      default: undefined,
     },
 
     payment: {
@@ -168,6 +235,14 @@ const invoiceSchema = new Schema<IInvoice>(
         required: true,
         default: false,
       },
+      country: {
+        type: String,
+        trim: true,
+      },
+      treatment: {
+        type: String,
+        enum: ["domestic", "international"],
+      },
       taxName: {
         type: String,
         trim: true,
@@ -180,10 +255,18 @@ const invoiceSchema = new Schema<IInvoice>(
         type: Number,
         min: 0,
       },
+      subtotal: {
+        type: Number,
+        min: 0,
+      },
       totalAmount: {
         type: Number,
         required: true,
         min: 0,
+      },
+      lutApplied: {
+        type: Boolean,
+        default: false,
       },
     },
 
@@ -226,10 +309,10 @@ const invoiceSchema = new Schema<IInvoice>(
   }
 );
 
-// Prevent multiple invoices from being issued for the same order.
+// One invoice per order.
 invoiceSchema.index({ orderId: 1 }, { unique: true });
 
-// Quickly retrieve a customer's invoices.
+// Efficient customer invoice history.
 invoiceSchema.index({ userId: 1, createdAt: -1 });
 
 const Invoice: Model<IInvoice> =

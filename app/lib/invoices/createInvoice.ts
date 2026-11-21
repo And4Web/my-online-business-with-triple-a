@@ -1,29 +1,21 @@
-
 import "server-only";
 
 import React from "react";
 import mongoose from "mongoose";
-import { randomUUID } from "node:crypto";
 
-import {
-  renderToBuffer,
-  type DocumentProps,
-} from "@react-pdf/renderer";
+import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer";
 
-import {
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 import dbConnect from "../mongodb";
 import Order from "../models/Order";
 import Invoice from "../models/Invoice";
 import InvoiceDocument from "./InvoiceDocument";
 
-import {
-  getStorageClient,
-  getStorageConfig,
-} from "../storage/client";
+import { createInvoiceNumber } from "./createInvoiceNumber";
+import { BUSINESS_CONFIG, BUSINESS_ADDRESS } from "./business-config";
+
+import { getStorageClient, getStorageConfig } from "../storage/client";
 
 type CreateInvoiceInput = {
   orderId: string;
@@ -45,14 +37,6 @@ type CreateInvoiceInput = {
   };
 };
 
-function createInvoiceNumber(): string {
-  const year = new Date().getFullYear();
-
-  return `INV-${year}-${randomUUID()
-    .slice(0, 8)
-    .toUpperCase()}`;
-}
-
 function isDuplicateKeyError(error: unknown): boolean {
   return (
     typeof error === "object" &&
@@ -62,36 +46,17 @@ function isDuplicateKeyError(error: unknown): boolean {
   );
 }
 
-export async function createInvoiceForPaidOrder(
-  input: CreateInvoiceInput
-) {
+export async function createInvoiceForPaidOrder(input: CreateInvoiceInput) {
   if (!mongoose.isValidObjectId(input.orderId)) {
     throw new Error("Invalid order ID.");
   }
 
-  if (
-    !input.customer.name.trim() ||
-    !input.customer.email.trim()
-  ) {
+  if (!input.customer.name.trim() || !input.customer.email.trim()) {
     throw new Error("Valid customer details are required.");
   }
 
-  if (
-    !(input.paidAt instanceof Date) ||
-    Number.isNaN(input.paidAt.getTime())
-  ) {
+  if (!(input.paidAt instanceof Date) || Number.isNaN(input.paidAt.getTime())) {
     throw new Error("A valid payment date is required.");
-  }
-
-  if (
-    input.tax?.applicable &&
-    (
-      input.tax.taxAmount === undefined ||
-      !Number.isFinite(input.tax.taxAmount) ||
-      input.tax.taxAmount < 0
-    )
-  ) {
-    throw new Error("A valid tax amount is required.");
   }
 
   await dbConnect();
@@ -103,9 +68,7 @@ export async function createInvoiceForPaidOrder(
   }
 
   if (order.paymentStatus !== "paid") {
-    throw new Error(
-      "An invoice can only be created for a paid order."
-    );
+    throw new Error("An invoice can only be created for a paid order.");
   }
 
   let invoice = await Invoice.findOne({
@@ -113,11 +76,7 @@ export async function createInvoiceForPaidOrder(
   });
 
   if (invoice) {
-    if (invoice.status === "ready") {
-      return invoice;
-    }
-
-    if (invoice.status === "generating") {
+    if (invoice.status === "ready" || invoice.status === "generating") {
       return invoice;
     }
 
@@ -133,7 +92,7 @@ export async function createInvoiceForPaidOrder(
       },
       {
         new: true,
-      }
+      },
     );
 
     if (!claimedInvoice) {
@@ -142,18 +101,57 @@ export async function createInvoiceForPaidOrder(
 
     invoice = claimedInvoice;
   } else {
+    // Checkout stores the final amount, including any applicable tax.
     const amount = order.amount;
-    const taxApplicable = input.tax?.applicable ?? false;
 
-    const taxAmount = taxApplicable
-      ? input.tax?.taxAmount ?? 0
-      : 0;
+    // Use the tax snapshot saved during checkout.
+    const savedTax = order.tax;
 
-    const invoiceNumber = createInvoiceNumber();
-    const year = new Date().getFullYear();
+    const taxApplicable =
+      savedTax?.applicable ?? input.tax?.applicable ?? false;
 
-    const storageKey =
-      `invoices/${year}/${invoiceNumber}.pdf`;
+    const taxName = savedTax?.taxName ?? input.tax?.taxName;
+
+    const taxRate = savedTax?.taxRate ?? input.tax?.taxRate;
+
+    const taxAmount = savedTax?.taxAmount ?? input.tax?.taxAmount ?? 0;
+
+    if (!Number.isFinite(taxAmount) || taxAmount < 0) {
+      throw new Error("Invalid saved order tax amount.");
+    }
+
+    const subtotal =
+      order.subtotal ?? Math.round((amount - taxAmount) * 100) / 100;
+
+    if (subtotal < 0) {
+      throw new Error("Invalid order subtotal.");
+    }
+
+    // Prefer the multi-item order snapshot.
+    // Older single-product orders remain supported.
+    const orderItems =
+      order.items && order.items.length > 0
+        ? order.items.map((item) => ({
+            productId: item.productId,
+            title: item.productTitle,
+            slug: item.productSlug,
+            price: item.price,
+          }))
+        : [
+            {
+              productId: order.productId,
+              title: order.productTitle,
+              slug: order.productSlug,
+              price: subtotal,
+            },
+          ];
+
+    // Allocate a GST-compliant sequential invoice number.
+    const invoiceNumber = await createInvoiceNumber();
+
+    const financialYear = invoiceNumber.split("/")[1] ?? "unassigned";
+
+    const storageKey = `invoices/${financialYear}/${invoiceNumber}.pdf`;
 
     try {
       invoice = await Invoice.create({
@@ -162,21 +160,33 @@ export async function createInvoiceForPaidOrder(
         userId: order.userId,
 
         seller: {
-          name: "and4web.co.in",
-          website: "https://and4web.co.in",
-          managedBy: "Divine Flame IT Solutions",
+          name: BUSINESS_CONFIG.tradeName,
+          legalName: BUSINESS_CONFIG.legalName,
+          website: BUSINESS_CONFIG.website,
+          managedBy: BUSINESS_CONFIG.legalName,
+          gstin: BUSINESS_CONFIG.gstin,
+          sacCode: BUSINESS_CONFIG.sacCode,
+          registeredAddress: BUSINESS_ADDRESS,
         },
 
         customer: {
           name: input.customer.name.trim(),
           email: input.customer.email.trim().toLowerCase(),
-          billingAddress: input.customer.billingAddress?.trim(),
+          billingAddress:
+            input.customer.billingAddress?.trim() ||
+            order.customer?.address ||
+            undefined,
+          country: order.customer?.country || undefined,
         },
 
+        // Keep the first item in the legacy fields.
         product: {
-          title: order.productTitle,
-          slug: order.productSlug,
+          title: orderItems[0].title,
+          slug: orderItems[0].slug,
         },
+
+        // Full list for combined orders.
+        items: orderItems,
 
         payment: {
           amount,
@@ -188,10 +198,22 @@ export async function createInvoiceForPaidOrder(
 
         tax: {
           applicable: taxApplicable,
-          taxName: input.tax?.taxName,
-          taxRate: input.tax?.taxRate,
+          country: savedTax?.country || order.customer?.country,
+          treatment: savedTax?.treatment,
+          taxName,
+          taxRate,
           taxAmount,
-          totalAmount: amount + taxAmount,
+          subtotal,
+          totalAmount: amount,
+
+          // Do not claim LUT treatment until export qualification
+          // has been explicitly verified.
+          lutApplied:
+            savedTax?.lutApplied === true &&
+            savedTax?.treatment === "international" &&
+            savedTax?.applicable === false &&
+            taxRate === 0 &&
+            taxAmount === 0,
         },
 
         pdf: {
@@ -223,16 +245,11 @@ export async function createInvoiceForPaidOrder(
   try {
     const invoiceData = invoice.toObject();
 
-    const pdfElement = React.createElement(
-      InvoiceDocument,
-      {
-        invoice: invoiceData,
-      }
-    ) as unknown as React.ReactElement<DocumentProps>;
+    const pdfElement = React.createElement(InvoiceDocument, {
+      invoice: invoiceData,
+    }) as unknown as React.ReactElement<DocumentProps>;
 
-    const pdfBuffer = Buffer.from(
-      await renderToBuffer(pdfElement)
-    );
+    const pdfBuffer = Buffer.from(await renderToBuffer(pdfElement));
 
     if (pdfBuffer.length === 0) {
       throw new Error("Generated invoice PDF is empty.");
@@ -255,7 +272,7 @@ export async function createInvoiceForPaidOrder(
           orderId: order._id.toString(),
           userId: order.userId,
         },
-      })
+      }),
     );
 
     uploadedStorageKey = storageKey;
@@ -279,13 +296,10 @@ export async function createInvoiceForPaidOrder(
           new DeleteObjectCommand({
             Bucket: config.bucket,
             Key: uploadedStorageKey,
-          })
+          }),
         );
       } catch (cleanupError) {
-        console.error(
-          "Invoice PDF cleanup failed:",
-          cleanupError
-        );
+        console.error("Invoice PDF cleanup failed:", cleanupError);
       }
     }
 
@@ -293,10 +307,7 @@ export async function createInvoiceForPaidOrder(
       invoice.status = "failed";
       await invoice.save();
     } catch (databaseError) {
-      console.error(
-        "Invoice failure status update failed:",
-        databaseError
-      );
+      console.error("Invoice failure status update failed:", databaseError);
     }
 
     throw new Error("Unable to generate the invoice PDF.");

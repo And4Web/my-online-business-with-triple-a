@@ -4,10 +4,19 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+type OrderItem = {
+  productId: string;
+  productTitle: string;
+  productSlug: string;
+  price: number;
+};
+
 type Order = {
   id: string;
   productTitle: string;
   productSlug: string;
+  productId?: string;
+  items?: OrderItem[];
   amount: number;
   currency: string;
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
@@ -56,7 +65,6 @@ export default function OrderHistory() {
   useEffect(() => {
     async function fetchAccountData() {
       try {
-        // Load the customer's orders.
         const ordersResponse = await fetch("/api/orders", {
           cache: "no-store",
         });
@@ -71,7 +79,6 @@ export default function OrderHistory() {
 
         setOrders(ordersData.orders || []);
 
-        // Load the customer's ready invoices separately.
         try {
           const invoicesResponse = await fetch("/api/invoices", {
             cache: "no-store",
@@ -229,77 +236,128 @@ export default function OrderHistory() {
           {orders.map((order) => {
             const invoice = invoices[order.id];
 
+            // Older orders do not have an items array.
+            // Build a display item from their original single-product fields.
+            const orderItems: OrderItem[] =
+              order.items && order.items.length > 0
+                ? order.items
+                : [
+                    {
+                      productId: order.productId || order.id,
+                      productTitle: order.productTitle,
+                      productSlug: order.productSlug,
+                      price: order.amount,
+                    },
+                  ];
+
+            const isSingleProductOrder = orderItems.length === 1;
+
             return (
               <div
                 key={order.id}
-                className="flex flex-col justify-between gap-4 rounded-xl border border-slate-800 bg-slate-950/50 p-5 sm:flex-row sm:items-center"
+                className="rounded-xl border border-slate-800 bg-slate-950/50 p-5"
               >
-                <div>
-                  <Link
-                    href={`/projects/${order.productSlug}`}
-                    className="font-semibold text-white transition hover:text-blue-400"
-                  >
-                    {order.productTitle}
-                  </Link>
-
-                  <p className="mt-2 text-sm text-slate-500">
-                    Order date:{" "}
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </p>
-
-                  <p className="mt-1 text-sm font-medium text-slate-300">
-                    {formatAmount(order.amount, order.currency)}
-                  </p>
-
-                  {invoice && (
-                    <p className="mt-2 text-xs text-slate-400">
-                      Invoice: {invoice.invoiceNumber}
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Order
                     </p>
-                  )}
-                </div>
 
-                <div className="flex flex-col items-start gap-3 sm:items-end">
-                  <span
-                    className={`w-fit rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusStyles[order.paymentStatus]}`}
-                  >
-                    {order.paymentStatus}
-                  </span>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Order date:{" "}
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </p>
 
-                  {order.paymentStatus === "paid" && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleDownload(order.id)}
-                        disabled={
-                          downloadingId !== null ||
-                          downloadingInvoiceId !== null
-                        }
-                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {downloadingId === order.id
-                          ? "Preparing download..."
-                          : "Download ZIP"}
-                      </button>
-
-                      {invoice && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleInvoiceDownload(invoice.id)
-                          }
-                          disabled={
-                            downloadingInvoiceId !== null ||
-                            downloadingId !== null
-                          }
-                          className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    <div className="mt-4 space-y-3">
+                      {orderItems.map((item, index) => (
+                        <div
+                          key={`${item.productId}-${index}`}
+                          className="flex flex-col justify-between gap-1 border-b border-slate-800 pb-3 last:border-0 last:pb-0 sm:flex-row sm:items-center"
                         >
-                          {downloadingInvoiceId === invoice.id
-                            ? "Preparing invoice..."
-                            : "Download Invoice PDF"}
-                        </button>
-                      )}
-                    </>
-                  )}
+                          <Link
+                            href={`/projects/${item.productSlug}`}
+                            className="font-semibold text-white transition hover:text-blue-400"
+                          >
+                            {item.productTitle}
+                          </Link>
+
+                          <span className="text-sm text-slate-300">
+                            {formatAmount(item.price, order.currency)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-4 border-t border-slate-800 pt-3">
+                      <p className="text-sm text-slate-400">
+                        {orderItems.length}{" "}
+                        {orderItems.length === 1 ? "product" : "products"}
+                      </p>
+
+                      <p className="mt-1 text-base font-semibold text-white">
+                        Order total:{" "}
+                        {formatAmount(order.amount, order.currency)}
+                      </p>
+                    </div>
+
+                    {invoice && (
+                      <p className="mt-3 text-xs text-slate-400">
+                        Invoice: {invoice.invoiceNumber}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col items-start gap-3 sm:items-end">
+                    <span
+                      className={`w-fit rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusStyles[order.paymentStatus]}`}
+                    >
+                      {order.paymentStatus}
+                    </span>
+
+                    {order.paymentStatus === "paid" && (
+                      <>
+                        {isSingleProductOrder ? (
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(order.id)}
+                            disabled={
+                              downloadingId !== null ||
+                              downloadingInvoiceId !== null
+                            }
+                            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {downloadingId === order.id
+                              ? "Preparing download..."
+                              : "Download ZIP"}
+                          </button>
+                        ) : (
+                          <p className="max-w-52 text-right text-xs text-slate-400">
+                            Individual product downloads will be available
+                            here once the multi-product download system is
+                            connected.
+                          </p>
+                        )}
+
+                        {invoice && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleInvoiceDownload(invoice.id)
+                            }
+                            disabled={
+                              downloadingInvoiceId !== null ||
+                              downloadingId !== null
+                            }
+                            className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {downloadingInvoiceId === invoice.id
+                              ? "Preparing invoice..."
+                              : "Download Invoice PDF"}
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             );

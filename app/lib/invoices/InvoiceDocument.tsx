@@ -1,4 +1,11 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+} from "@react-pdf/renderer";
 
 import type { IInvoice } from "../models/Invoice";
 import { LUT_FOOTER_TEXT } from "./lut-config";
@@ -21,17 +28,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 32,
+    marginBottom: 28,
   },
   brand: {
-    fontSize: 23,
+    fontSize: 22,
     fontFamily: "Helvetica-Bold",
     color: "#0f172a",
     marginBottom: 5,
   },
   subtitle: {
-    fontSize: 9,
+    fontSize: 8,
     color: "#64748b",
+    marginBottom: 3,
   },
   invoiceHeading: {
     fontSize: 25,
@@ -48,12 +56,12 @@ const styles = StyleSheet.create({
   divider: {
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
-    marginBottom: 22,
+    marginBottom: 20,
   },
   sectionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 28,
+    marginBottom: 24,
   },
   section: {
     width: "48%",
@@ -62,19 +70,19 @@ const styles = StyleSheet.create({
     fontSize: 8,
     fontFamily: "Helvetica-Bold",
     color: "#64748b",
-    marginBottom: 9,
+    marginBottom: 8,
     letterSpacing: 0.5,
   },
   strongText: {
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    marginBottom: 5,
+    marginBottom: 4,
     color: "#0f172a",
   },
   normalText: {
-    fontSize: 9,
+    fontSize: 8,
     color: "#475569",
-    marginBottom: 4,
+    marginBottom: 3,
     lineHeight: 1.5,
   },
   detailsRow: {
@@ -82,24 +90,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 9,
   },
-  detailsLabel: {
-    fontSize: 9,
-    color: "#64748b",
-  },
-  detailsValue: {
-    fontSize: 9,
-    color: "#0f172a",
-    fontFamily: "Helvetica-Bold",
-  },
   table: {
-    marginTop: 12,
-    marginBottom: 24,
+    marginTop: 8,
+    marginBottom: 22,
   },
   tableHeader: {
     flexDirection: "row",
     backgroundColor: "#f1f5f9",
-    paddingVertical: 11,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
     borderRadius: 3,
   },
   tableHeaderText: {
@@ -109,31 +108,38 @@ const styles = StyleSheet.create({
   },
   productRow: {
     flexDirection: "row",
-    paddingVertical: 14,
-    paddingHorizontal: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
+    alignItems: "flex-start",
   },
   productName: {
-    width: "65%",
-    fontSize: 10,
+    width: "48%",
+    fontSize: 9,
     fontFamily: "Helvetica-Bold",
     color: "#0f172a",
   },
+  sacColumn: {
+    width: "20%",
+    fontSize: 8,
+    color: "#475569",
+    textAlign: "center",
+  },
   productPrice: {
-    width: "35%",
-    fontSize: 10,
+    width: "32%",
+    fontSize: 9,
     textAlign: "right",
     color: "#0f172a",
   },
   totals: {
     alignItems: "flex-end",
-    marginTop: 5,
+    marginTop: 4,
   },
   totalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: 190,
+    width: 210,
     marginBottom: 9,
   },
   totalLabel: {
@@ -172,13 +178,13 @@ const styles = StyleSheet.create({
     marginTop: 18,
   },
   footer: {
-    marginTop: "auto",
-    paddingTop: 20,
+    marginTop: 28,
+    paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: "#e2e8f0",
   },
   footerText: {
-    fontSize: 8,
+    fontSize: 7,
     color: "#64748b",
     textAlign: "center",
     marginBottom: 5,
@@ -193,7 +199,10 @@ const styles = StyleSheet.create({
   },
 });
 
-function formatCurrency(amount: number, currency: string): string {
+function formatCurrency(
+  amount: number,
+  currency: string
+): string {
   try {
     return new Intl.NumberFormat("en", {
       style: "currency",
@@ -209,43 +218,75 @@ function formatDate(date: Date | string): string {
     day: "2-digit",
     month: "short",
     year: "numeric",
+    timeZone: "Asia/Kolkata",
   }).format(new Date(date));
 }
 
-export default function InvoiceDocument({ invoice }: InvoiceDocumentProps) {
-  const amount = formatCurrency(
+export default function InvoiceDocument({
+  invoice,
+}: InvoiceDocumentProps) {
+  const currency = invoice.payment.currency;
+
+  // Final amount is the amount actually paid.
+  const total = formatCurrency(
     invoice.payment.amount,
-    invoice.payment.currency,
+    currency
   );
 
-  const total = formatCurrency(
-    invoice.tax.totalAmount,
-    invoice.payment.currency,
-  );
+  const taxAmount = invoice.tax.taxAmount ?? 0;
+
+  // Checkout already includes applicable tax in the final amount.
+  const subtotal =
+    invoice.tax.subtotal ??
+    Math.round((invoice.payment.amount - taxAmount) * 100) / 100;
+
+  const formattedSubtotal = formatCurrency(subtotal, currency);
+
+  // Support both new multi-item and old single-product invoices.
+  const items =
+    invoice.items && invoice.items.length > 0
+      ? invoice.items
+      : [
+          {
+            title: invoice.product.title,
+            slug: invoice.product.slug,
+            price: subtotal,
+          },
+        ];
+
+  const subject = items.map((item) => item.title).join(", ");
 
   return (
     <Document
       title={`Invoice ${invoice.invoiceNumber}`}
       author={invoice.seller.name}
-      subject={`Purchase invoice for ${invoice.product.title}`}
+      subject={`Purchase invoice for ${subject}`}
     >
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={styles.page} wrap>
         {/* Invoice heading */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.brand}>{invoice.seller.name}</Text>
+          <View style={{ width: "62%" }}>
+            <Text style={styles.brand}>
+              {invoice.seller.name}
+            </Text>
 
             <Text style={styles.subtitle}>
               Ready-made Software & Web Applications
             </Text>
 
-            <Text style={styles.subtitle}>{invoice.seller.website}</Text>
+            <Text style={styles.subtitle}>
+              {invoice.seller.website}
+            </Text>
           </View>
 
-          <View>
-            <Text style={styles.invoiceHeading}>INVOICE</Text>
+          <View style={{ width: "38%" }}>
+            <Text style={styles.invoiceHeading}>
+              INVOICE
+            </Text>
 
-            <Text style={styles.invoiceNumber}>{invoice.invoiceNumber}</Text>
+            <Text style={styles.invoiceNumber}>
+              {invoice.invoiceNumber}
+            </Text>
           </View>
         </View>
 
@@ -254,130 +295,218 @@ export default function InvoiceDocument({ invoice }: InvoiceDocumentProps) {
         {/* Seller and customer details */}
         <View style={styles.sectionRow}>
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>SELLER</Text>
+            <Text style={styles.sectionLabel}>
+              SELLER DETAILS
+            </Text>
 
-            <Text style={styles.strongText}>{invoice.seller.name}</Text>
-
-            <Text style={styles.normalText}>{invoice.seller.website}</Text>
+            <Text style={styles.strongText}>
+              {invoice.seller.legalName ||
+                invoice.seller.managedBy}
+            </Text>
 
             <Text style={styles.normalText}>
-              Managed by {invoice.seller.managedBy}
+              Trade Name: {invoice.seller.name}
+            </Text>
+
+            {invoice.seller.gstin ? (
+              <Text style={styles.normalText}>
+                GSTIN: {invoice.seller.gstin}
+              </Text>
+            ) : null}
+
+            {invoice.seller.registeredAddress ? (
+              <Text style={styles.normalText}>
+                Registered Address: {invoice.seller.registeredAddress}
+              </Text>
+            ) : null}
+
+            <Text style={styles.normalText}>
+              Website: {invoice.seller.website}
             </Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>BILL TO</Text>
+            <Text style={styles.sectionLabel}>
+              BILL TO
+            </Text>
 
-            <Text style={styles.strongText}>{invoice.customer.name}</Text>
+            <Text style={styles.strongText}>
+              {invoice.customer.name}
+            </Text>
 
-            <Text style={styles.normalText}>{invoice.customer.email}</Text>
+            <Text style={styles.normalText}>
+              {invoice.customer.email}
+            </Text>
 
             {invoice.customer.billingAddress ? (
               <Text style={styles.normalText}>
                 {invoice.customer.billingAddress}
               </Text>
             ) : null}
-          </View>
-        </View>
 
-        {/* Invoice dates and payment reference */}
-        <View style={styles.sectionRow}>
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>INVOICE DATE</Text>
-
-            <Text style={styles.normalText}>
-              {formatDate(invoice.generatedAt ?? invoice.createdAt)}
-            </Text>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>PAYMENT DATE</Text>
-
-            <Text style={styles.normalText}>
-              {formatDate(invoice.payment.paidAt)}
-            </Text>
-
-            {invoice.payment.transactionId ? (
+            {invoice.customer.country ? (
               <Text style={styles.normalText}>
-                Reference: {invoice.payment.transactionId}
+                Country: {invoice.customer.country}
               </Text>
             ) : null}
           </View>
         </View>
 
-        {/* Purchased product */}
+        {/* Invoice and payment dates */}
+        <View style={styles.sectionRow}>
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>
+              INVOICE DATE
+            </Text>
+
+            <Text style={styles.normalText}>
+              {formatDate(
+                invoice.generatedAt ?? invoice.createdAt
+              )}
+            </Text>
+
+            <Text style={styles.normalText}>
+              SAC Code: {invoice.seller.sacCode || "998434"}
+            </Text>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>
+              PAYMENT DETAILS
+            </Text>
+
+            <Text style={styles.normalText}>
+              Payment Date: {formatDate(invoice.payment.paidAt)}
+            </Text>
+
+            <Text style={styles.normalText}>
+              Currency: {currency.toUpperCase()}
+            </Text>
+
+            {invoice.payment.transactionId ? (
+              <Text style={styles.normalText}>
+                Transaction Reference: {invoice.payment.transactionId}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+
+        {/* Supply and tax classification */}
+        <View style={{ marginBottom: 12 }}>
+          <Text style={styles.sectionLabel}>
+            SUPPLY DETAILS
+          </Text>
+
+          <Text style={styles.normalText}>
+            Supply Type:{" "}
+            {invoice.tax.treatment === "domestic"
+              ? "Domestic"
+              : invoice.tax.treatment === "international"
+                ? "International"
+                : "As recorded"}
+          </Text>
+
+          {invoice.tax.country ? (
+            <Text style={styles.normalText}>
+              Destination Country: {invoice.tax.country}
+            </Text>
+          ) : null}
+        </View>
+
+        {/* Purchased products */}
         <View style={styles.table}>
           <View style={styles.tableHeader}>
-            <Text style={styles.tableHeaderText}>DESCRIPTION</Text>
+            <Text style={[styles.tableHeaderText, { width: "48%" }]}>
+              DESCRIPTION
+            </Text>
 
-            <Text
-              style={[
-                styles.tableHeaderText,
-                { width: "35%", textAlign: "right" },
-              ]}
-            >
+            <Text style={[styles.tableHeaderText, { width: "20%", textAlign: "center" }]}>
+              SAC
+            </Text>
+
+            <Text style={[styles.tableHeaderText, { width: "32%", textAlign: "right" }]}>
               AMOUNT
             </Text>
           </View>
 
-          <View style={styles.productRow}>
-            <Text style={styles.productName}>{invoice.product.title}</Text>
-
-            <Text style={styles.productPrice}>{amount}</Text>
-          </View>
-        </View>
-
-        {/* Payment totals */}
-        <View style={styles.totals}>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Subtotal</Text>
-
-            <Text style={styles.totalValue}>{amount}</Text>
-          </View>
-
-          {invoice.tax.applicable ? (
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>
-                {invoice.tax.taxName || "Tax"}
-                {invoice.tax.taxRate !== undefined
-                  ? ` (${invoice.tax.taxRate}%)`
-                  : ""}
+          {items.map((item, index) => (
+            <View style={styles.productRow} key={`${item.slug}-${index}`}>
+              <Text style={styles.productName}>
+                {item.title}
               </Text>
 
-              <Text style={styles.totalValue}>
-                {formatCurrency(
-                  invoice.tax.taxAmount ?? 0,
-                  invoice.payment.currency,
-                )}
+              <Text style={styles.sacColumn}>
+                {invoice.seller.sacCode || "998434"}
+              </Text>
+
+              <Text style={styles.productPrice}>
+                {formatCurrency(item.price, currency)}
               </Text>
             </View>
-          ) : null}
+          ))}
+        </View>
+
+        {/* Tax and payment totals */}
+        <View style={styles.totals}>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>
+              Subtotal
+            </Text>
+
+            <Text style={styles.totalValue}>
+              {formattedSubtotal}
+            </Text>
+          </View>
+
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>
+              {invoice.tax.taxName || "GST / Tax"}
+              {invoice.tax.taxRate !== undefined
+                ? ` (${invoice.tax.taxRate}%)`
+                : ""}
+            </Text>
+
+            <Text style={styles.totalValue}>
+              {formatCurrency(taxAmount, currency)}
+            </Text>
+          </View>
 
           <View style={[styles.totalRow, styles.grandTotal]}>
-            <Text style={styles.grandTotalLabel}>Total Paid</Text>
+            <Text style={styles.grandTotalLabel}>
+              Total Paid
+            </Text>
 
-            <Text style={styles.grandTotalValue}>{total}</Text>
+            <Text style={styles.grandTotalValue}>
+              {total}
+            </Text>
           </View>
         </View>
 
-        <Text style={styles.paymentBadge}>PAYMENT RECEIVED</Text>
+        <Text style={styles.paymentBadge}>
+          PAYMENT RECEIVED
+        </Text>
 
         {/* Footer */}
-        <View style={styles.footer}>
+        <View style={styles.footer} wrap={false}>
           <Text style={styles.footerText}>
             Thank you for choosing {invoice.seller.name}.
           </Text>
 
           <Text style={styles.footerText}>
-            {invoice.seller.name} is managed by {invoice.seller.managedBy}.
+            {invoice.seller.name} is managed by{" "}
+            {invoice.seller.managedBy}.
           </Text>
 
           <Text style={styles.footerText}>
-            This document records the payment and purchase details associated
-            with this invoice.
+            This document records the payment and purchase details
+            associated with this invoice.
           </Text>
 
-          <Text style={styles.lutFooterText}>{LUT_FOOTER_TEXT}</Text>
+          {invoice.tax.lutApplied ? (
+            <Text style={styles.lutFooterText}>
+              {LUT_FOOTER_TEXT}
+            </Text>
+          ) : null}
         </View>
       </Page>
     </Document>

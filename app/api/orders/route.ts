@@ -6,6 +6,7 @@ import { auth } from "../../lib/auth";
 import Product from "../../lib/models/Product";
 import Order from "../../lib/models/Order";
 
+
 export async function GET() {
   try {
     const session = await auth.api.getSession({
@@ -24,7 +25,9 @@ export async function GET() {
     const orders = await Order.find({
       userId: session.user.id,
     })
-      .select("productTitle productSlug amount currency paymentStatus createdAt")
+      .select(
+        "productId productTitle productSlug items amount currency paymentStatus createdAt"
+      )
       .sort({ createdAt: -1 })
       .lean();
 
@@ -32,8 +35,20 @@ export async function GET() {
       ok: true,
       orders: orders.map((order) => ({
         id: order._id.toString(),
+        productId: order.productId?.toString(),
         productTitle: order.productTitle,
         productSlug: order.productSlug,
+
+        // Return every product in a combined order.
+        items: Array.isArray(order.items)
+          ? order.items.map((item) => ({
+              productId: item.productId.toString(),
+              productTitle: item.productTitle,
+              productSlug: item.productSlug,
+              price: item.price,
+            }))
+          : [],
+
         amount: order.amount,
         currency: order.currency,
         paymentStatus: order.paymentStatus,
@@ -47,6 +62,7 @@ export async function GET() {
     );
   }
 }
+
 
 export async function POST(request: Request) {
   try {

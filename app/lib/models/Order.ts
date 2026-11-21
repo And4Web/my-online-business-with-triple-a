@@ -1,4 +1,3 @@
-
 import mongoose, { Schema, type Model } from "mongoose";
 
 export interface IOrderItem {
@@ -14,20 +13,33 @@ export interface IOrderCustomer {
   country: string;
 }
 
+export interface IOrderTax {
+  country: string;
+  treatment: "domestic" | "international";
+  applicable: boolean;
+  taxName: string;
+  taxRate: number;
+  taxAmount: number;
+  lutApplied?: boolean;
+}
+
 export interface IOrder {
   userId: string;
 
   // Legacy single-product fields.
-  // For new multi-product orders, these represent the first item.
   productId: mongoose.Types.ObjectId;
   productTitle: string;
   productSlug: string;
 
-  // New multi-product order fields.
+  // Multi-product order fields.
   items?: IOrderItem[];
   customer?: IOrderCustomer;
 
-  // Combined order total.
+  // New tax fields. Optional for older orders.
+  subtotal?: number;
+  tax?: IOrderTax;
+
+  // Combined payable total, including tax where applicable.
   amount: number;
   currency: string;
 
@@ -62,9 +74,7 @@ const OrderItemSchema = new Schema<IOrderItem>(
       max: 49,
     },
   },
-  {
-    _id: false,
-  }
+  { _id: false },
 );
 
 const OrderCustomerSchema = new Schema<IOrderCustomer>(
@@ -88,9 +98,46 @@ const OrderCustomerSchema = new Schema<IOrderCustomer>(
       maxlength: 100,
     },
   },
+  { _id: false },
+);
+
+const OrderTaxSchema = new Schema<IOrderTax>(
   {
-    _id: false,
-  }
+    country: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    treatment: {
+      type: String,
+      enum: ["domestic", "international"],
+      required: true,
+    },
+    applicable: {
+      type: Boolean,
+      required: true,
+    },
+    taxName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    taxRate: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    taxAmount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    lutApplied: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { _id: false },
 );
 
 const OrderSchema = new Schema<IOrder>(
@@ -118,8 +165,6 @@ const OrderSchema = new Schema<IOrder>(
       trim: true,
     },
 
-    // New orders store all purchased products here.
-    // Existing orders continue working with their legacy fields.
     items: {
       type: [OrderItemSchema],
       default: undefined,
@@ -130,8 +175,17 @@ const OrderSchema = new Schema<IOrder>(
       required: false,
     },
 
-    // The order total may exceed $49.
-    // Each individual product is still limited to $49.
+    subtotal: {
+      type: Number,
+      min: 0,
+    },
+
+    tax: {
+      type: OrderTaxSchema,
+      required: false,
+    },
+
+    // The combined order total may exceed $49.
     amount: {
       type: Number,
       required: true,
@@ -157,9 +211,7 @@ const OrderSchema = new Schema<IOrder>(
       trim: true,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true },
 );
 
 OrderSchema.index(
@@ -169,11 +221,10 @@ OrderSchema.index(
     partialFilterExpression: {
       idempotencyKey: { $type: "string" },
     },
-  }
+  },
 );
 
 const Order: Model<IOrder> =
-  mongoose.models.Order ||
-  mongoose.model<IOrder>("Order", OrderSchema);
+  mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);
 
 export default Order;

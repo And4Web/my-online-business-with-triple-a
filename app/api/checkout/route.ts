@@ -18,6 +18,24 @@ function isDuplicateKeyError(error: unknown) {
   );
 }
 
+function isIndianCountry(country: string) {
+  const normalized = country
+    .trim()
+    .toLowerCase()
+    .replace(/[.,]/g, "")
+    .replace(/\s+/g, " ");
+
+  return [
+    "india",
+    "bharat",
+    "republic of india",
+  ].includes(normalized);
+}
+
+function roundMoney(amount: number) {
+  return Math.round((amount + Number.EPSILON) * 100) / 100;
+}
+
 async function clearPurchasedItems(
   userId: string,
   productIds: mongoose.Types.ObjectId[]
@@ -124,6 +142,8 @@ export async function POST(request: Request) {
         message: "This checkout request has already been processed.",
         order: {
           id: existingOrder._id.toString(),
+          subtotal: existingOrder.subtotal ?? existingOrder.amount,
+          tax: existingOrder.tax ?? null,
           amount: existingOrder.amount,
           currency: existingOrder.currency,
           paymentStatus: existingOrder.paymentStatus,
@@ -142,9 +162,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const productIds = cart.items.map(
-      (item) => item.productId
-    );
+    const productIds = cart.items.map((item) => item.productId);
 
     // 5. Retrieve current product information from the database.
     const products = await Product.find({
@@ -163,9 +181,7 @@ export async function POST(request: Request) {
     const unavailableItems: string[] = [];
 
     const orderItems = cart.items.map((item) => {
-      const product = productMap.get(
-        item.productId.toString()
-      );
+      const product = productMap.get(item.productId.toString());
 
       if (!product) {
         unavailableItems.push(item.productId.toString());
@@ -180,7 +196,10 @@ export async function POST(request: Request) {
       };
     });
 
-    if (unavailableItems.length > 0 || orderItems.some((item) => !item)) {
+    if (
+      unavailableItems.length > 0 ||
+      orderItems.some((item) => !item)
+    ) {
       return NextResponse.json(
         {
           ok: false,
@@ -192,24 +211,39 @@ export async function POST(request: Request) {
       );
     }
 
-    // 6. Calculate the combined total using database prices.
+    // 6. Calculate the subtotal using current database prices.
     const validItems = orderItems.filter(
       (item): item is NonNullable<typeof item> => item !== null
     );
 
-    const totalAmount = validItems.reduce(
-      (total, item) => total + item.price,
-      0
+    const subtotal = roundMoney(
+      validItems.reduce((total, item) => total + item.price, 0)
     );
 
-    if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
+    if (!Number.isFinite(subtotal) || subtotal <= 0) {
       return NextResponse.json(
-        { ok: false, message: "Unable to calculate the order total." },
+        { ok: false, message: "Unable to calculate the order subtotal." },
         { status: 400 }
       );
     }
 
-    // 7. Create one pending order containing all products.
+    // 7. Apply the country-based tax rule.
+    const isIndia = isIndianCountry(country);
+
+    const taxRate = isIndia ? 18 : 0;
+    const taxAmount = roundMoney(subtotal * taxRate / 100);
+    const totalAmount = roundMoney(subtotal + taxAmount);
+
+    const tax = {
+      country,
+      treatment: isIndia ? "domestic" as const : "international" as const,
+      applicable: isIndia,
+      taxName: isIndia ? "GST" : "Export tax",
+      taxRate,
+      taxAmount,
+    };
+
+    // 8. Create one pending order containing all products.
     try {
       const firstItem = validItems[0];
 
@@ -221,7 +255,6 @@ export async function POST(request: Request) {
         productTitle: firstItem.productTitle,
         productSlug: firstItem.productSlug,
 
-        // Complete multi-product order.
         items: validItems,
 
         customer: {
@@ -230,17 +263,16 @@ export async function POST(request: Request) {
           country,
         },
 
+        subtotal,
+        tax,
         amount: totalAmount,
         currency: "USD",
         paymentStatus: "pending",
         idempotencyKey,
       });
 
-      // 8. Remove only products included in this order.
-      await clearPurchasedItems(
-        userId,
-        productIds
-      );
+      // 9. Remove only products included in this order.
+      await clearPurchasedItems(userId, productIds);
 
       return NextResponse.json(
         {
@@ -248,6 +280,8 @@ export async function POST(request: Request) {
           message: "Your pending order was created successfully.",
           order: {
             id: order._id.toString(),
+            subtotal: order.subtotal,
+            tax: order.tax,
             amount: order.amount,
             currency: order.currency,
             paymentStatus: order.paymentStatus,
@@ -262,7 +296,6 @@ export async function POST(request: Request) {
         { status: 201 }
       );
     } catch (error) {
-      // Handle simultaneous requests with the same idempotency key.
       if (isDuplicateKeyError(error)) {
         const duplicateOrder = await Order.findOne({
           userId,
@@ -281,6 +314,8 @@ export async function POST(request: Request) {
             message: "This checkout request has already been processed.",
             order: {
               id: duplicateOrder._id.toString(),
+              subtotal: duplicateOrder.subtotal ?? duplicateOrder.amount,
+              tax: duplicateOrder.tax ?? null,
               amount: duplicateOrder.amount,
               currency: duplicateOrder.currency,
               paymentStatus: duplicateOrder.paymentStatus,

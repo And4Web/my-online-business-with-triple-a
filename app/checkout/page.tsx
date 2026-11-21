@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
@@ -32,6 +31,16 @@ function formatPrice(amount: number) {
   }).format(amount);
 }
 
+function isIndianCountry(country: string) {
+  const normalized = country
+    .trim()
+    .toLowerCase()
+    .replace(/[.,]/g, "")
+    .replace(/\s+/g, " ");
+
+  return ["india", "bharat", "republic of india"].includes(normalized);
+}
+
 export default function CheckoutPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [fullName, setFullName] = useState("");
@@ -43,8 +52,9 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState("");
-  const [completedOrder, setCompletedOrder] =
-    useState<CheckoutOrder | null>(null);
+  const [completedOrder, setCompletedOrder] = useState<CheckoutOrder | null>(
+    null,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -72,9 +82,7 @@ export default function CheckoutPage() {
       } catch (err) {
         if (!cancelled) {
           setError(
-            err instanceof Error
-              ? err.message
-              : "Unable to load your cart."
+            err instanceof Error ? err.message : "Unable to load your cart.",
           );
         }
       } finally {
@@ -91,16 +99,22 @@ export default function CheckoutPage() {
     };
   }, []);
 
-  const availableItems = items.filter(
-    (item) => item.product?.isAvailable
-  );
+  const availableItems = items.filter((item) => item.product?.isAvailable);
 
   const unavailableCount = items.length - availableItems.length;
 
   const subtotal = availableItems.reduce(
     (total, item) => total + (item.product?.price ?? 0),
-    0
+    0,
   );
+
+  const taxRate =
+    country.trim().length === 0 ? null : isIndianCountry(country) ? 18 : 0;
+
+  const estimatedTax =
+    taxRate === null ? 0 : Math.round(subtotal * taxRate) / 100;
+
+  const estimatedTotal = subtotal + estimatedTax;
 
   async function handleCheckout(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -135,9 +149,7 @@ export default function CheckoutPage() {
       }
 
       if (!response.ok) {
-        throw new Error(
-          data.message || "Unable to complete checkout."
-        );
+        throw new Error(data.message || "Unable to complete checkout.");
       }
 
       setCompletedOrder(data.order);
@@ -146,7 +158,7 @@ export default function CheckoutPage() {
       setError(
         err instanceof Error
           ? err.message
-          : "Something went wrong. Please try again."
+          : "Something went wrong. Please try again.",
       );
     } finally {
       setSubmitting(false);
@@ -164,9 +176,7 @@ export default function CheckoutPage() {
   if (needsSignIn) {
     return (
       <main className="min-h-[70vh] bg-slate-950 px-6 py-20 text-center">
-        <h1 className="text-3xl font-bold text-white">
-          Sign in required
-        </h1>
+        <h1 className="text-3xl font-bold text-white">Sign in required</h1>
 
         <p className="mt-4 text-slate-400">
           Please sign in to continue with checkout.
@@ -215,15 +225,13 @@ export default function CheckoutPage() {
 
             <div className="mt-4 flex justify-between text-sm text-slate-400">
               <span>Payment Status</span>
-              <span className="font-semibold text-amber-400">
-                Pending
-              </span>
+              <span className="font-semibold text-amber-400">Pending</span>
             </div>
           </div>
 
           <p className="mt-6 text-sm leading-6 text-slate-500">
-            Payment processing is not enabled yet. You can view your order
-            from your customer account.
+            Payment processing is not enabled yet. You can view your order from
+            your customer account.
           </p>
 
           <Link
@@ -240,9 +248,7 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <main className="min-h-[70vh] bg-slate-950 px-6 py-20 text-center">
-        <h1 className="text-3xl font-bold text-white">
-          Your cart is empty
-        </h1>
+        <h1 className="text-3xl font-bold text-white">Your cart is empty</h1>
 
         <p className="mt-4 text-slate-400">
           Add some projects before proceeding to checkout.
@@ -286,9 +292,8 @@ export default function CheckoutPage() {
 
         {unavailableCount > 0 && (
           <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-300">
-            Some products are unavailable. Please return to your cart and
-            remove them before checkout.
-            {" "}
+            Some products are unavailable. Please return to your cart and remove
+            them before checkout.{" "}
             <Link href="/cart" className="font-semibold underline">
               Review cart
             </Link>
@@ -385,16 +390,14 @@ export default function CheckoutPage() {
               </button>
 
               <p className="text-center text-xs leading-5 text-slate-500">
-                This step creates a pending order. Payment processing is
-                not enabled yet.
+                This step creates a pending order. Payment processing is not
+                enabled yet.
               </p>
             </form>
           </section>
 
           <aside className="h-fit rounded-2xl border border-white/10 bg-slate-900/70 p-6">
-            <h2 className="text-xl font-semibold text-white">
-              Order Summary
-            </h2>
+            <h2 className="text-xl font-semibold text-white">Order Summary</h2>
 
             <div className="mt-6 space-y-5">
               {items.map((item) => (
@@ -408,34 +411,71 @@ export default function CheckoutPage() {
                     </p>
 
                     {!item.product?.isAvailable && (
-                      <p className="mt-1 text-xs text-amber-400">
-                        Unavailable
-                      </p>
+                      <p className="mt-1 text-xs text-amber-400">Unavailable</p>
                     )}
                   </div>
 
                   <span className="shrink-0 text-slate-300">
-                    {item.product
-                      ? formatPrice(item.product.price)
-                      : "—"}
+                    {item.product ? formatPrice(item.product.price) : "—"}
                   </span>
                 </div>
               ))}
             </div>
 
+            {/* <div className="my-6 border-t border-white/10" />
+
+            <div className="flex justify-between gap-4 text-lg font-bold text-white">
+              <span>Estimated Total</span>
+
+              <span className="text-emerald-400">{formatPrice(subtotal)}</span>
+            </div> */}
+
             <div className="my-6 border-t border-white/10" />
+
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between gap-4 text-slate-400">
+                <span>Subtotal</span>
+                <span className="text-white">{formatPrice(subtotal)}</span>
+              </div>
+
+              <div className="flex justify-between gap-4 text-slate-400">
+                <span>
+                  {taxRate === null
+                    ? "GST / Tax"
+                    : taxRate === 18
+                      ? "GST (18%)"
+                      : "Tax (0%)"}
+                </span>
+
+                <span className="text-white">
+                  {taxRate === null
+                    ? "Enter country"
+                    : formatPrice(estimatedTax)}
+                </span>
+              </div>
+            </div>
+
+            <div className="my-5 border-t border-white/10" />
 
             <div className="flex justify-between gap-4 text-lg font-bold text-white">
               <span>Estimated Total</span>
 
               <span className="text-emerald-400">
-                {formatPrice(subtotal)}
+                {formatPrice(estimatedTotal)}
               </span>
             </div>
 
             <p className="mt-4 text-xs leading-5 text-slate-500">
-              Final product availability and prices are verified by our
-              server when your order is placed.
+              {taxRate === null
+                ? "Enter your destination country to calculate the estimated tax."
+                : taxRate === 18
+                  ? "An estimated 18% GST is added for customers in India."
+                  : "No GST is added for customers outside India. Export treatment is subject to applicable GST conditions."}
+            </p>
+
+            <p className="mt-4 text-xs leading-5 text-slate-500">
+              Final product availability and prices are verified by our server
+              when your order is placed.
             </p>
 
             <Link

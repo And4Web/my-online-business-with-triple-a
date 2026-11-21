@@ -38,37 +38,50 @@ export default function SiteHeader() {
 
         {/* Desktop navigation */}
         <div className="hidden items-center gap-7 text-sm font-medium text-slate-300 lg:flex">
-          <Link
-            href="/"
-            className="transition hover:text-blue-400"
-          >
+          <Link href="/" className="transition hover:text-blue-400">
             Home
           </Link>
 
-          <Link
-            href="/projects"
-            className="transition hover:text-blue-400"
-          >
+          <Link href="/projects" className="transition hover:text-blue-400">
             Projects
           </Link>
 
-          <Link
-            href="/about"
-            className="transition hover:text-blue-400"
-          >
+          <Link href="/about" className="transition hover:text-blue-400">
             About
           </Link>
 
-          <Link
-            href="/contact"
-            className="transition hover:text-blue-400"
-          >
+          <Link href="/contact" className="transition hover:text-blue-400">
             Contact
           </Link>
         </div>
 
         {/* Desktop account actions */}
         <div className="hidden shrink-0 items-center gap-4 lg:flex">
+          {/* Cart link */}
+          <Link
+            href="/cart"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:border-emerald-500 hover:text-emerald-400"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              className="h-5 w-5"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3 3h2l2.2 11.2a2 2 0 002 1.6h8.9a2 2 0 002-1.6L22 7H6"
+              />
+              <circle cx="10" cy="20" r="1" />
+              <circle cx="18" cy="20" r="1" />
+            </svg>
+            Cart
+          </Link>
+
           {!isPending && (
             session ? (
               <>
@@ -190,6 +203,32 @@ export default function SiteHeader() {
               className="rounded-lg px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-slate-900 hover:text-blue-400"
             >
               Contact
+            </Link>
+
+            {/* Mobile Cart link */}
+            <Link
+              href="/cart"
+              onClick={closeMobileMenu}
+              className="flex items-center gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-400 transition hover:bg-emerald-500/20"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                className="h-5 w-5"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 3h2l2.2 11.2a2 2 0 002 1.6h8.9a2 2 0 002-1.6L22 7H6"
+                />
+                <circle cx="10" cy="20" r="1" />
+                <circle cx="18" cy="20" r="1" />
+              </svg>
+              Go to Cart
             </Link>
 
             {!isPending && (

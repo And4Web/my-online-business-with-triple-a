@@ -1,13 +1,7 @@
-
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-} from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
 import type { IInvoice } from "../models/Invoice";
+import { LUT_FOOTER_TEXT } from "./lut-config";
 
 type InvoiceDocumentProps = {
   invoice: IInvoice;
@@ -190,6 +184,13 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     lineHeight: 1.5,
   },
+  lutFooterText: {
+    fontSize: 7,
+    color: "#475569",
+    textAlign: "center",
+    marginBottom: 7,
+    lineHeight: 1.5,
+  },
 });
 
 function formatCurrency(amount: number, currency: string): string {
@@ -211,17 +212,15 @@ function formatDate(date: Date | string): string {
   }).format(new Date(date));
 }
 
-export default function InvoiceDocument({
-  invoice,
-}: InvoiceDocumentProps) {
+export default function InvoiceDocument({ invoice }: InvoiceDocumentProps) {
   const amount = formatCurrency(
     invoice.payment.amount,
-    invoice.payment.currency
+    invoice.payment.currency,
   );
 
   const total = formatCurrency(
     invoice.tax.totalAmount,
-    invoice.payment.currency
+    invoice.payment.currency,
   );
 
   return (
@@ -234,27 +233,19 @@ export default function InvoiceDocument({
         {/* Invoice heading */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.brand}>
-              {invoice.seller.name}
-            </Text>
+            <Text style={styles.brand}>{invoice.seller.name}</Text>
 
             <Text style={styles.subtitle}>
-              Digital Products & Software Marketplace
+              Ready-made Software & Web Applications
             </Text>
 
-            <Text style={styles.subtitle}>
-              {invoice.seller.website}
-            </Text>
+            <Text style={styles.subtitle}>{invoice.seller.website}</Text>
           </View>
 
           <View>
-            <Text style={styles.invoiceHeading}>
-              INVOICE
-            </Text>
+            <Text style={styles.invoiceHeading}>INVOICE</Text>
 
-            <Text style={styles.invoiceNumber}>
-              {invoice.invoiceNumber}
-            </Text>
+            <Text style={styles.invoiceNumber}>{invoice.invoiceNumber}</Text>
           </View>
         </View>
 
@@ -263,17 +254,11 @@ export default function InvoiceDocument({
         {/* Seller and customer details */}
         <View style={styles.sectionRow}>
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>
-              SELLER
-            </Text>
+            <Text style={styles.sectionLabel}>SELLER</Text>
 
-            <Text style={styles.strongText}>
-              {invoice.seller.name}
-            </Text>
+            <Text style={styles.strongText}>{invoice.seller.name}</Text>
 
-            <Text style={styles.normalText}>
-              {invoice.seller.website}
-            </Text>
+            <Text style={styles.normalText}>{invoice.seller.website}</Text>
 
             <Text style={styles.normalText}>
               Managed by {invoice.seller.managedBy}
@@ -281,17 +266,11 @@ export default function InvoiceDocument({
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>
-              BILL TO
-            </Text>
+            <Text style={styles.sectionLabel}>BILL TO</Text>
 
-            <Text style={styles.strongText}>
-              {invoice.customer.name}
-            </Text>
+            <Text style={styles.strongText}>{invoice.customer.name}</Text>
 
-            <Text style={styles.normalText}>
-              {invoice.customer.email}
-            </Text>
+            <Text style={styles.normalText}>{invoice.customer.email}</Text>
 
             {invoice.customer.billingAddress ? (
               <Text style={styles.normalText}>
@@ -304,9 +283,7 @@ export default function InvoiceDocument({
         {/* Invoice dates and payment reference */}
         <View style={styles.sectionRow}>
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>
-              INVOICE DATE
-            </Text>
+            <Text style={styles.sectionLabel}>INVOICE DATE</Text>
 
             <Text style={styles.normalText}>
               {formatDate(invoice.generatedAt ?? invoice.createdAt)}
@@ -314,9 +291,7 @@ export default function InvoiceDocument({
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>
-              PAYMENT DATE
-            </Text>
+            <Text style={styles.sectionLabel}>PAYMENT DATE</Text>
 
             <Text style={styles.normalText}>
               {formatDate(invoice.payment.paidAt)}
@@ -333,9 +308,7 @@ export default function InvoiceDocument({
         {/* Purchased product */}
         <View style={styles.table}>
           <View style={styles.tableHeader}>
-            <Text style={styles.tableHeaderText}>
-              DESCRIPTION
-            </Text>
+            <Text style={styles.tableHeaderText}>DESCRIPTION</Text>
 
             <Text
               style={[
@@ -348,26 +321,18 @@ export default function InvoiceDocument({
           </View>
 
           <View style={styles.productRow}>
-            <Text style={styles.productName}>
-              {invoice.product.title}
-            </Text>
+            <Text style={styles.productName}>{invoice.product.title}</Text>
 
-            <Text style={styles.productPrice}>
-              {amount}
-            </Text>
+            <Text style={styles.productPrice}>{amount}</Text>
           </View>
         </View>
 
         {/* Payment totals */}
         <View style={styles.totals}>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>
-              Subtotal
-            </Text>
+            <Text style={styles.totalLabel}>Subtotal</Text>
 
-            <Text style={styles.totalValue}>
-              {amount}
-            </Text>
+            <Text style={styles.totalValue}>{amount}</Text>
           </View>
 
           {invoice.tax.applicable ? (
@@ -382,26 +347,20 @@ export default function InvoiceDocument({
               <Text style={styles.totalValue}>
                 {formatCurrency(
                   invoice.tax.taxAmount ?? 0,
-                  invoice.payment.currency
+                  invoice.payment.currency,
                 )}
               </Text>
             </View>
           ) : null}
 
           <View style={[styles.totalRow, styles.grandTotal]}>
-            <Text style={styles.grandTotalLabel}>
-              Total Paid
-            </Text>
+            <Text style={styles.grandTotalLabel}>Total Paid</Text>
 
-            <Text style={styles.grandTotalValue}>
-              {total}
-            </Text>
+            <Text style={styles.grandTotalValue}>{total}</Text>
           </View>
         </View>
 
-        <Text style={styles.paymentBadge}>
-          PAYMENT RECEIVED
-        </Text>
+        <Text style={styles.paymentBadge}>PAYMENT RECEIVED</Text>
 
         {/* Footer */}
         <View style={styles.footer}>
@@ -410,14 +369,15 @@ export default function InvoiceDocument({
           </Text>
 
           <Text style={styles.footerText}>
-            {invoice.seller.name} is managed by{" "}
-            {invoice.seller.managedBy}.
+            {invoice.seller.name} is managed by {invoice.seller.managedBy}.
           </Text>
 
           <Text style={styles.footerText}>
-            This document records the payment and purchase
-            details associated with this invoice.
+            This document records the payment and purchase details associated
+            with this invoice.
           </Text>
+
+          <Text style={styles.lutFooterText}>{LUT_FOOTER_TEXT}</Text>
         </View>
       </Page>
     </Document>

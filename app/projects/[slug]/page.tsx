@@ -6,7 +6,8 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import dbConnect from "../../lib/mongodb";
 import Product from "../../lib/models/Product";
-import PurchaseButton from "../../components/PurchaseButton";
+// import PurchaseButton from "../../components/PurchaseButton";
+import CartButton from "@/app/components/CartButton";
 
 type ProjectDetailPageProps = {
   params: Promise<{
@@ -304,7 +305,8 @@ async function ProjectDetails({ slug }: { slug: string }) {
     </p>
 
     <div className="mt-5">
-      <PurchaseButton slug={product.slug} />
+      {/* <PurchaseButton slug={product.slug} /> */}
+      <CartButton slug={product.slug} />
     </div>
   </div>
 ) : (

@@ -15,15 +15,14 @@ type ProjectDetailPageProps = {
   }>;
 };
 
-
 export async function generateMetadata({
   params,
 }: ProjectDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
 
   try {
+    await connection();
     await dbConnect();
-
     const product = await Product.findOne({
       slug,
       status: { $in: ["active", "coming-soon"] },
@@ -53,24 +52,18 @@ export async function generateMetadata({
         canonical: `/projects/${slug}`,
       },
       openGraph: {
-        title: `${product.title} | Nexora`,
+        title: `${product.title} | And4Web`,
         description,
         url: `/projects/${slug}`,
-        siteName: "Nexora",
+        siteName: "And4Web",
         type: "website",
-        ...(product.imageUrl
-          ? { images: [product.imageUrl] }
-          : {}),
+        ...(product.imageUrl ? { images: [product.imageUrl] } : {}),
       },
       twitter: {
-        card: product.imageUrl
-          ? "summary_large_image"
-          : "summary",
-        title: `${product.title} | Nexora`,
+        card: product.imageUrl ? "summary_large_image" : "summary",
+        title: `${product.title} | And4Web`,
         description,
-        ...(product.imageUrl
-          ? { images: [product.imageUrl] }
-          : {}),
+        ...(product.imageUrl ? { images: [product.imageUrl] } : {}),
       },
     };
   } catch (error) {
@@ -78,11 +71,10 @@ export async function generateMetadata({
 
     return {
       title: "Project Details",
-      description: "Explore ready-made software projects at Nexora.",
+      description: "Explore original ready-made software and full-stack source-code solutions at And4Web.",
     };
   }
 }
-
 
 async function ProjectDetails({ slug }: { slug: string }) {
   await connection();
@@ -108,13 +100,11 @@ async function ProjectDetails({ slug }: { slug: string }) {
   }
 
   const isAvailable = product.status === "active";
-  const imageUrl =
-    typeof product.imageUrl === "string" ? product.imageUrl : "";
+  const imageUrl = typeof product.imageUrl === "string" ? product.imageUrl : "";
 
   return (
     <main className="min-h-screen bg-slate-950 px-5 py-12 text-white sm:px-6 sm:py-16">
       <div className="mx-auto max-w-6xl">
-
         {/* Back Navigation */}
         <Link
           href="/projects"
@@ -126,7 +116,6 @@ async function ProjectDetails({ slug }: { slug: string }) {
 
         {/* Product Preview */}
         <section className="relative mt-8 flex min-h-64 items-center justify-center overflow-hidden rounded-3xl border border-slate-800 bg-linear-to-br from-slate-900 via-slate-900 to-blue-950/60 sm:min-h-96">
-
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -157,17 +146,15 @@ async function ProjectDetails({ slug }: { slug: string }) {
 
           <div className="absolute bottom-6 left-6 z-10">
             <span className="rounded-full border border-white/10 bg-slate-950/70 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-slate-200 backdrop-blur">
-              Nexora Project Preview
+              And4Web Software Product Preview
             </span>
           </div>
         </section>
 
         {/* Product Information */}
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
-
           {/* Main Details */}
           <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 sm:p-9">
-
             <div className="flex flex-wrap items-center gap-3">
               <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-300">
                 {product.category}
@@ -194,9 +181,7 @@ async function ProjectDetails({ slug }: { slug: string }) {
 
             {/* Technologies */}
             <section className="mt-10 border-t border-slate-800 pt-8">
-              <h2 className="text-xl font-bold">
-                Technologies Used
-              </h2>
+              <h2 className="text-xl font-bold">Technologies Used</h2>
 
               <p className="mt-2 text-sm text-slate-500">
                 Built using modern development technologies.
@@ -216,9 +201,7 @@ async function ProjectDetails({ slug }: { slug: string }) {
 
             {/* Features */}
             <section className="mt-10 border-t border-slate-800 pt-8">
-              <h2 className="text-xl font-bold">
-                Project Features
-              </h2>
+              <h2 className="text-xl font-bold">Software Features</h2>
 
               <p className="mt-2 text-sm text-slate-500">
                 Explore what is included in this project.
@@ -245,30 +228,24 @@ async function ProjectDetails({ slug }: { slug: string }) {
 
           {/* Pricing Panel */}
           <aside className="h-fit rounded-3xl border border-slate-800 bg-slate-900/80 p-6 sm:p-7 lg:sticky lg:top-8">
-
-            <p className="text-sm font-medium text-slate-400">
-              Project Price
-            </p>
+            <p className="text-sm font-medium text-slate-400">Software Price</p>
 
             <div className="mt-3 flex items-baseline gap-2">
               <span className="text-5xl font-extrabold tracking-tight">
                 ${product.price}
               </span>
 
-              <span className="text-sm text-slate-500">
-                USD
-              </span>
+              <span className="text-sm text-slate-500">USD</span>
             </div>
 
             <p className="mt-3 text-sm leading-6 text-slate-400">
-  One-time project listing price. Payment processing is not enabled yet.
-</p>
+              One-time price for the software source code. Payment processing is
+              not enabled yet.
+            </p>
 
             <div className="my-7 border-t border-slate-800" />
 
-            <h2 className="font-bold text-white">
-              What to expect
-            </h2>
+            <h2 className="font-bold text-white">What to expect</h2>
 
             <ul className="mt-5 space-y-4 text-sm text-slate-300">
               <li className="flex items-center gap-3">
@@ -283,7 +260,7 @@ async function ProjectDetails({ slug }: { slug: string }) {
 
               <li className="flex items-center gap-3">
                 <span className="text-emerald-400">✓</span>
-                Project features and documentation
+                Software Features and documentation
               </li>
 
               <li className="flex items-center gap-3">
@@ -292,49 +269,48 @@ async function ProjectDetails({ slug }: { slug: string }) {
               </li>
             </ul>
 
-            
-{isAvailable ? (
-  <div className="mt-8 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
-    <h3 className="font-semibold text-emerald-300">
-      Ready to Order
-    </h3>
+            {isAvailable ? (
+              <div className="mt-8 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+                <h3 className="font-semibold text-emerald-300">
+                  Ready to Order
+                </h3>
 
-    <p className="mt-2 text-sm leading-6 text-slate-400">
-      You can create an order for this project. Payment processing
-      and secure downloads will be enabled in a later stage.
-    </p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  You can add this software to your cart and create an order.
+                  Payment processing and secure downloads will be enabled in a
+                  later stage.
+                </p>
 
-    <div className="mt-5">
-      {/* <PurchaseButton slug={product.slug} /> */}
-      <CartButton slug={product.slug} />
-    </div>
-  </div>
-) : (
-  <div className="mt-8 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
-    <h3 className="font-semibold text-amber-300">
-      Project Coming Soon
-    </h3>
+                <div className="mt-5">
+                  {/* <PurchaseButton slug={product.slug} /> */}
+                  <CartButton slug={product.slug} />
+                </div>
+              </div>
+            ) : (
+              <div className="mt-8 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
+                <h3 className="font-semibold text-amber-300">
+                  Project Coming Soon
+                </h3>
 
-    <p className="mt-2 text-sm leading-6 text-slate-400">
-      We are preparing this project for release. It cannot
-      currently be purchased or downloaded.
-    </p>
-  </div>
-)}
-
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  We are preparing this project for release. It cannot currently
+                  be purchased or downloaded.
+                </p>
+              </div>
+            )}
 
             <Link
               href="/projects"
               className="mt-6 flex w-full items-center justify-center rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-300 transition hover:border-blue-500/50 hover:bg-slate-800 hover:text-white"
             >
-              Explore More Projects
+              Explore More Software
             </Link>
           </aside>
         </div>
 
         {/* Bottom Note */}
         <p className="mt-10 text-center text-xs leading-6 text-slate-600">
-          Nexora — Ready-made projects for developers, entrepreneurs, and businesses.
+          And4Web — Original ready-made software and source-code solutions for developers, entrepreneurs, and businesses.
         </p>
       </div>
     </main>

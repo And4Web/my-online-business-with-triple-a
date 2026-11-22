@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -48,31 +47,24 @@ export default function ProjectsPage() {
         const data: ProductsApiResponse = await response.json();
 
         if (!response.ok || !data.ok) {
-          throw new Error(
-            data.message || "Unable to load projects."
-          );
+          throw new Error(data.message || "Unable to load projects.");
         }
 
-        const databaseProjects: Project[] = data.products.map(
-          (product) => ({
-            ...product,
-            href: `/projects/${product.slug}`,
-          })
-        );
+        const databaseProjects: Project[] = data.products.map((product) => ({
+          ...product,
+          href: `/projects/${product.slug}`,
+        }));
 
         setProjects(databaseProjects);
       } catch (error) {
-        if (
-          error instanceof Error &&
-          error.name === "AbortError"
-        ) {
+        if (error instanceof Error && error.name === "AbortError") {
           return;
         }
 
         console.error("Failed to load projects:", error);
 
         setErrorMessage(
-          "We couldn't load projects right now. Please try refreshing the page."
+          "We couldn't load projects right now. Please try refreshing the page.",
         );
       } finally {
         if (!controller.signal.aborted) {
@@ -99,7 +91,7 @@ export default function ProjectsPage() {
         project.category.toLowerCase().includes(searchText) ||
         project.description.toLowerCase().includes(searchText) ||
         project.technologies.some((technology) =>
-          technology.toLowerCase().includes(searchText)
+          technology.toLowerCase().includes(searchText),
         );
 
       return matchesCategory && matchesSearch;
@@ -128,7 +120,7 @@ export default function ProjectsPage() {
 
         <div className="mt-10 text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-blue-400">
-            The Nexora Marketplace
+            The And4Web ORIGINAL SOFTWARE COLLECTION
           </p>
 
           <h1 className="mt-4 text-4xl font-extrabold tracking-tight sm:text-6xl">
@@ -136,8 +128,9 @@ export default function ProjectsPage() {
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-400 sm:text-lg">
-            Discover affordable source-code starters that help you
-            build faster and bring your ideas to life.
+            Explore original ready-made full-stack software and source-code
+            solutions developed to help you build faster and bring your ideas to
+            life.
           </p>
         </div>
 
@@ -156,7 +149,7 @@ export default function ProjectsPage() {
               type="search"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search projects, technologies..."
+              placeholder="Search software, technologies..."
               className="w-full bg-transparent text-base text-white outline-none placeholder:text-slate-500"
             />
           </div>
@@ -195,9 +188,7 @@ export default function ProjectsPage() {
             )}
           </p>
 
-          <p className="text-sm text-slate-500">
-            Planned prices under $49
-          </p>
+          <p className="text-sm text-slate-500">Affordable software, priced under $50</p>
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
@@ -237,10 +228,7 @@ export default function ProjectsPage() {
             Connecting to our project catalog...
           </p>
         ) : errorMessage ? (
-          <p
-            className="mt-10 text-center text-red-400"
-            role="alert"
-          >
+          <p className="mt-10 text-center text-red-400" role="alert">
             {errorMessage}
           </p>
         ) : filteredProjects.length > 0 ? (
@@ -251,7 +239,7 @@ export default function ProjectsPage() {
           </div>
         ) : (
           <p className="mt-10 text-center text-slate-400">
-            No projects found in this category.
+            No software products found. Try changing your search or filters.
           </p>
         )}
 

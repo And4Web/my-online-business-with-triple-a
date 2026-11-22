@@ -10,7 +10,7 @@ import OrderHistory from "./OrderHistory";
 
 export const metadata: Metadata = {
   title: "My Account",
-  description: "Manage your Nexora customer account and purchases.",
+  description: "Manage your And4Web customer account and purchases.",
   robots: {
     index: false,
     follow: false,
@@ -34,7 +34,7 @@ async function ProtectedAccountPage() {
             href="/"
             className="text-xl font-bold text-blue-400"
           >
-            Nexora
+            And4Web
           </Link>
 
           <p className="mt-8 text-sm font-semibold uppercase tracking-widest text-blue-400">
@@ -46,7 +46,7 @@ async function ProtectedAccountPage() {
           </h1>
 
           <p className="mt-3 text-slate-400">
-            Manage your Nexora account and explore your marketplace.
+            Manage your And4Web account and explore your marketplace.
           </p>
         </div>
 
@@ -100,7 +100,7 @@ async function ProtectedAccountPage() {
 
         <div className="mt-8 flex flex-col gap-4 border-t border-slate-800 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-500">
-            Thank you for being part of Nexora.
+            Thank you for being part of And4Web.
           </p>
 
           <SignOutButton />

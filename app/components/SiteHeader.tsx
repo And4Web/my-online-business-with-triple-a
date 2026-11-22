@@ -28,11 +28,11 @@ export default function SiteHeader() {
           className="group flex shrink-0 flex-col"
         >
           <span className="text-3xl font-extrabold tracking-tight text-white transition group-hover:text-blue-100">
-            Nexora<span className="text-blue-400">.</span>
+            And4Web<span className="text-blue-400">.</span>
           </span>
 
           <span className="hidden text-[10px] font-medium tracking-[0.2em] text-slate-500 sm:block">
-            READY-MADE SOFTWARE PROJECTS
+            READY-MADE SOFTWARE & SOURCE CODE
           </span>
         </Link>
 

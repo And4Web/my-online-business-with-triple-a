@@ -21,30 +21,30 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
-  
+
   title: {
-    default: "Nexora | Ready-Made Full-Stack Projects",
-    template: "%s | Nexora",
+    default: "And4Web | Original Ready-Made Software & Source Code",
+    template: "%s | And4Web",
   },
 
   description:
-    "Discover ready-made full-stack software projects with source code. Explore e-commerce platforms, communication apps, booking systems and more at Nexora, operated by Divine flame IT Solutions.",
+    "Discover original ready-made full-stack software and source-code solutions, including e-commerce applications, communication apps, booking systems and more. And4Web is a software brand operated by Divine Flame IT Solutions.",
 
-  applicationName: "Nexora",
+  applicationName: "And4Web",
 
   openGraph: {
     type: "website",
-    title: "Nexora | Ready-Made Full-Stack Projects",
+    title: "And4Web | Original Ready-Made Software & Source Code",
     description:
-      "Explore ready-made full-stack software projects and source code. Build with confidence and launch faster with Nexora.",
-    siteName: "Nexora",
+      "Explore original ready-made full-stack software applications and source-code solutions developed by Divine Flame IT Solutions. Build with confidence and launch faster with And4Web.",
+    siteName: "And4Web",
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "Nexora | Ready-Made Full-Stack Projects",
+    title: "And4Web | Original Ready-Made Software & Source Code",
     description:
-      "Discover ready-made full-stack software projects and source code at Nexora.",
+      "Discover original ready-made full-stack software and source-code solutions at And4Web, operated by Divine Flame IT Solutions.",
   },
 
   robots: {

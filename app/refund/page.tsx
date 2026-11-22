@@ -1,30 +1,28 @@
-
 import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Refund & Cancellation Policy",
   description:
-    "Review Nexora's refund and cancellation policy for digital software purchases, including duplicate payments, failed delivery, technical issues, refund requests, and customer rights.",
+    "Review And4Web's refund and cancellation policy for digital software purchases, including duplicate payments, failed delivery, technical issues, refund requests, and customer rights.",
   alternates: {
     canonical: "/refund",
   },
   openGraph: {
-    title: "Refund & Cancellation Policy | Nexora",
+    title: "Refund & Cancellation Policy | And4Web",
     description:
-      "Understand how Nexora handles digital product refunds, order cancellations, payment issues, and customer support.",
+      "Understand how And4Web handles refunds for original digital software products, order cancellations, payment issues, and customer support.",
     url: "/refund",
-    siteName: "Nexora",
+    siteName: "And4Web",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Refund & Cancellation Policy | Nexora",
+    title: "Refund & Cancellation Policy | And4Web",
     description:
-      "Read Nexora's refund, cancellation, and digital product support policy.",
+      "Read And4Web's refund, cancellation, and digital product support policy.",
   },
 };
-
 
 const lastUpdated = "November 11, 2026";
 
@@ -42,9 +40,9 @@ export default function RefundPolicyPage() {
           </h1>
 
           <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-600">
-            This policy explains how refund requests, order
-            cancellations, payment issues, and digital product
-            delivery concerns are handled by Nexora.
+            This policy explains how refund requests, order cancellations,
+            payment issues, and digital product delivery concerns are handled by
+            And4Web.
           </p>
 
           <p className="mt-4 text-sm text-gray-500">
@@ -55,23 +53,19 @@ export default function RefundPolicyPage() {
 
       <section className="px-6 py-14">
         <div className="mx-auto max-w-5xl space-y-12">
-
           <div>
-            <h2 className="text-2xl font-semibold">
-              1. About This Policy
-            </h2>
+            <h2 className="text-2xl font-semibold">1. About This Policy</h2>
 
             <p className="mt-4 leading-8 text-gray-600">
-              Nexora is a digital marketplace operated by Divine flame
-              IT Solutions. We offer ready-made software projects and
-              related digital products that customers can purchase
-              and access electronically.
+              And4Web is a software brand operated by Divine Flame IT Solutions,
+              an independent software development business. We develop and offer
+              our own original ready-made software products and source-code
+              solutions that customers can purchase and access electronically.
             </p>
 
             <p className="mt-4 leading-8 text-gray-600">
-              This policy applies to purchases made through the
-              Nexora website. It should be read together with our
-              Terms &amp; Conditions.
+              This policy applies to purchases made through the And4Web website.
+              It should be read together with our Terms &amp; Conditions.
             </p>
           </div>
 
@@ -81,23 +75,21 @@ export default function RefundPolicyPage() {
             </h2>
 
             <p className="mt-4 leading-8 text-gray-600">
-              Nexora primarily offers downloadable digital products,
-              including software project source-code packages.
-              These products are supplied electronically rather
-              than through physical shipment.
+              And4Web offers original downloadable digital products, including
+              ready-made software applications and source-code packages
+              developed by Divine Flame IT Solutions. These products are
+              supplied electronically rather than through physical shipment.
             </p>
 
             <p className="mt-4 leading-8 text-gray-600">
-              Product descriptions, listed features, supported
-              technologies, and stated requirements should be
-              reviewed before placing an order.
+              Product descriptions, listed features, supported technologies, and
+              stated requirements should be reviewed before placing an order.
             </p>
 
             <p className="mt-4 leading-8 text-gray-600">
-              Where a product includes specific technical
-              requirements or limitations, those details should
-              be considered when evaluating whether the product
-              is suitable for your intended use.
+              Where a product includes specific technical requirements or
+              limitations, those details should be considered when evaluating
+              whether the product is suitable for your intended use.
             </p>
           </div>
 
@@ -107,49 +99,46 @@ export default function RefundPolicyPage() {
             </h2>
 
             <p className="mt-4 leading-8 text-gray-600">
-              Customers may contact us to request a refund review
-              in circumstances such as:
+              Customers may contact us to request a refund review in
+              circumstances such as:
             </p>
 
             <ul className="mt-4 list-disc space-y-3 pl-6 leading-8 text-gray-600">
               <li>
-                A duplicate payment was successfully charged for
-                the same purchase.
+                A duplicate payment was successfully charged for the same
+                purchase.
               </li>
 
               <li>
-                A payment was debited but the order was not
-                successfully created or confirmed.
+                A payment was debited but the order was not successfully created
+                or confirmed.
               </li>
 
               <li>
-                The purchased digital product was not delivered
-                or cannot be accessed because of a verified
-                technical problem on our side.
+                The purchased digital product was not delivered or cannot be
+                accessed because of a verified technical problem on our side.
               </li>
 
               <li>
-                The delivered product materially differs from
-                its description or stated specifications.
+                The delivered product materially differs from its description or
+                stated specifications.
               </li>
 
               <li>
-                The product contains a verified defect that
-                prevents it from functioning substantially as
-                described and cannot reasonably be resolved
-                through support.
+                The product contains a verified defect that prevents it from
+                functioning substantially as described and cannot reasonably be
+                resolved through support.
               </li>
 
               <li>
-                A refund is otherwise required under applicable
-                consumer protection laws.
+                A refund is otherwise required under applicable consumer
+                protection laws.
               </li>
             </ul>
 
             <p className="mt-4 leading-8 text-gray-600">
-              Each request will be reviewed according to the
-              circumstances, available evidence, product
-              description, and applicable law.
+              Each request will be reviewed according to the circumstances,
+              available evidence, product description, and applicable law.
             </p>
           </div>
 
@@ -159,47 +148,42 @@ export default function RefundPolicyPage() {
             </h2>
 
             <p className="mt-4 leading-8 text-gray-600">
-              If your order is marked as paid but the download
-              is unavailable, the download link does not work,
-              or the delivered file appears incomplete or
-              corrupted, please contact our support team.
+              If your order is marked as paid but the download is unavailable,
+              the download link does not work, or the delivered file appears
+              incomplete or corrupted, please contact our support team.
             </p>
 
             <p className="mt-4 leading-8 text-gray-600">
-              We will investigate the issue and, where appropriate,
-              attempt to restore access, provide a corrected file,
-              or offer another suitable resolution.
+              We will investigate the issue and, where appropriate, attempt to
+              restore access, provide a corrected file, or offer another
+              suitable resolution.
             </p>
 
             <p className="mt-4 leading-8 text-gray-600">
-              If the problem cannot reasonably be resolved,
-              a refund may be considered in accordance with
-              applicable law.
+              If the problem cannot reasonably be resolved, a refund may be
+              considered in accordance with applicable law.
             </p>
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold">
-              5. Order Cancellation
-            </h2>
+            <h2 className="text-2xl font-semibold">5. Order Cancellation</h2>
 
             <p className="mt-4 leading-8 text-gray-600">
-              If you wish to cancel an order, please contact us
-              as soon as possible and provide your order details.
+              If you wish to cancel an order, please contact us as soon as
+              possible and provide your order details.
             </p>
 
             <p className="mt-4 leading-8 text-gray-600">
-              Cancellation requests will be reviewed based on
-              the order status, whether digital delivery or
-              access has already been provided, and applicable
-              consumer protection requirements.
+              Cancellation requests will be reviewed based on the order status,
+              whether digital delivery or access has already been provided, and
+              applicable consumer protection requirements.
             </p>
 
             <p className="mt-4 leading-8 text-gray-600">
-              We will not use this policy to exclude cancellation
-              or refund rights that consumers have under applicable
-              law. We will also not impose cancellation charges
-              contrary to applicable legal requirements.
+              We will not use this policy to exclude cancellation or refund
+              rights that consumers have under applicable law. We will also not
+              impose cancellation charges contrary to applicable legal
+              requirements.
             </p>
           </div>
 
@@ -209,38 +193,36 @@ export default function RefundPolicyPage() {
             </h2>
 
             <p className="mt-4 leading-8 text-gray-600">
-              Some requests may require additional investigation.
-              For example:
+              Some requests may require additional investigation. For example:
             </p>
 
             <ul className="mt-4 list-disc space-y-3 pl-6 leading-8 text-gray-600">
               <li>
-                The customer purchased a product but has difficulty
-                installing or configuring it.
+                The customer purchased a product but has difficulty installing
+                or configuring it.
               </li>
 
               <li>
-                The customer&apos;s development environment does not
-                meet the product&apos;s stated technical requirements.
+                The customer&apos;s development environment does not meet the
+                product&apos;s stated technical requirements.
               </li>
 
               <li>
-                The product is being used in a way that differs
-                from its documented purpose or specifications.
+                The product is being used in a way that differs from its
+                documented purpose or specifications.
               </li>
 
               <li>
-                The customer changes their mind after purchase
-                or requests a refund for reasons unrelated to
-                a product or delivery issue.
+                The customer changes their mind after purchase or requests a
+                refund for reasons unrelated to a product or delivery issue.
               </li>
             </ul>
 
             <p className="mt-4 leading-8 text-gray-600">
-              These circumstances do not automatically determine
-              whether a refund will be accepted or rejected.
-              Requests will be assessed individually, taking
-              account of the facts and applicable consumer rights.
+              These circumstances do not automatically determine whether a
+              refund will be accepted or rejected. Requests will be assessed
+              individually, taking account of the facts and applicable consumer
+              rights.
             </p>
           </div>
 
@@ -250,14 +232,12 @@ export default function RefundPolicyPage() {
             </h2>
 
             <p className="mt-4 leading-8 text-gray-600">
-              To request a refund or report a payment or delivery
-              issue, contact us using the business contact details
-              provided below.
+              To request a refund or report a payment or delivery issue, contact
+              us using the business contact details provided below.
             </p>
 
             <p className="mt-4 leading-8 text-gray-600">
-              Please include the following information where
-              available:
+              Please include the following information where available:
             </p>
 
             <ul className="mt-4 list-disc space-y-3 pl-6 leading-8 text-gray-600">
@@ -266,15 +246,14 @@ export default function RefundPolicyPage() {
               <li>The product name.</li>
               <li>The payment date and amount.</li>
               <li>
-                A description of the issue and relevant screenshots
-                or transaction references, if available.
+                A description of the issue and relevant screenshots or
+                transaction references, if available.
               </li>
             </ul>
 
             <p className="mt-4 leading-8 text-gray-600">
-              Please do not send passwords, authentication codes,
-              private keys, or other confidential credentials
-              when contacting support.
+              Please do not send passwords, authentication codes, private keys,
+              or other confidential credentials when contacting support.
             </p>
           </div>
 
@@ -284,30 +263,27 @@ export default function RefundPolicyPage() {
             </h2>
 
             <p className="mt-4 leading-8 text-gray-600">
-              We may review order records, payment confirmation,
-              delivery status, and relevant technical information
-              to assess a refund request.
+              We may review order records, payment confirmation, delivery
+              status, and relevant technical information to assess a refund
+              request.
             </p>
 
             <p className="mt-4 leading-8 text-gray-600">
-              If a refund is approved, it will be processed through
-              the applicable payment method or payment provider,
-              subject to the provider&apos;s procedures and applicable
-              requirements.
+              If a refund is approved, it will be processed through the
+              applicable payment method or payment provider, subject to the
+              provider&apos;s procedures and applicable requirements.
             </p>
 
             <p className="mt-4 leading-8 text-gray-600">
-              Refunds will be handled within the reasonable
-              period or timeframe prescribed by applicable law.
-              The time taken for the amount to appear in the
-              customer&apos;s account may also depend on the payment
-              provider or financial institution.
+              Refunds will be handled within the reasonable period or timeframe
+              prescribed by applicable law. The time taken for the amount to
+              appear in the customer&apos;s account may also depend on the
+              payment provider or financial institution.
             </p>
 
             <p className="mt-4 leading-8 text-gray-600">
-              We may request additional information when reasonably
-              necessary to verify a transaction or investigate
-              a reported problem.
+              We may request additional information when reasonably necessary to
+              verify a transaction or investigate a reported problem.
             </p>
           </div>
 
@@ -317,36 +293,30 @@ export default function RefundPolicyPage() {
             </h2>
 
             <p className="mt-4 leading-8 text-gray-600">
-              If a payment provider is involved in processing
-              your purchase, its payment terms and dispute
-              procedures may also apply.
+              If a payment provider is involved in processing your purchase, its
+              payment terms and dispute procedures may also apply.
             </p>
 
             <p className="mt-4 leading-8 text-gray-600">
-              Customers may contact us to resolve order-related
-              concerns. Any rights or remedies available through
-              the payment provider or under applicable law remain
-              unaffected by this policy.
+              Customers may contact us to resolve order-related concerns. Any
+              rights or remedies available through the payment provider or under
+              applicable law remain unaffected by this policy.
             </p>
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold">
-              10. Consumer Rights
-            </h2>
+            <h2 className="text-2xl font-semibold">10. Consumer Rights</h2>
 
             <p className="mt-4 leading-8 text-gray-600">
-              Nothing in this policy is intended to limit,
-              exclude, or waive any consumer rights or remedies
-              that cannot legally be excluded under applicable
-              law, including applicable Indian consumer protection
+              Nothing in this policy is intended to limit, exclude, or waive any
+              consumer rights or remedies that cannot legally be excluded under
+              applicable law, including applicable Indian consumer protection
               and e-commerce laws.
             </p>
 
             <p className="mt-4 leading-8 text-gray-600">
-              If any part of this policy conflicts with a
-              mandatory legal requirement, the applicable
-              legal requirement will prevail.
+              If any part of this policy conflicts with a mandatory legal
+              requirement, the applicable legal requirement will prevail.
             </p>
           </div>
 
@@ -356,19 +326,18 @@ export default function RefundPolicyPage() {
             </h2>
 
             <p className="mt-4 leading-8 text-gray-600">
-              For refund requests, order cancellations,
-              payment concerns, or consumer grievances,
-              please contact:
+              For refund requests, order cancellations, payment concerns, or
+              consumer grievances, please contact:
             </p>
 
             <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-7">
               <div className="space-y-3 leading-8 text-gray-600">
                 <p>
-                  <strong>Business Name:</strong> Divine flame IT Solutions
+                  <strong>Business Name:</strong> Divine Flame IT Solutions
                 </p>
 
                 <p>
-                  <strong>Marketplace:</strong> Nexora
+                  <strong>Software Brand:</strong> And4Web
                 </p>
 
                 <p>
@@ -402,9 +371,9 @@ export default function RefundPolicyPage() {
             </div>
 
             <p className="mt-5 leading-8 text-gray-600">
-              Consumer complaints will be acknowledged within
-              the timeframe required by applicable law and
-              addressed through our grievance redressal process.
+              Consumer complaints will be acknowledged within the timeframe
+              required by applicable law and addressed through our grievance
+              redressal process.
             </p>
           </div>
 
@@ -414,14 +383,13 @@ export default function RefundPolicyPage() {
             </h2>
 
             <p className="mt-4 leading-8 text-gray-600">
-              We may update this policy when our products,
-              payment arrangements, business operations,
-              or legal requirements change.
+              We may update this policy when our products, payment arrangements,
+              business operations, or legal requirements change.
             </p>
 
             <p className="mt-4 leading-8 text-gray-600">
-              The latest version will be published on this
-              page with its updated date.
+              The latest version will be published on this page with its updated
+              date.
             </p>
           </div>
 
@@ -431,17 +399,11 @@ export default function RefundPolicyPage() {
             </p>
 
             <div className="mt-5 flex flex-wrap gap-5 text-sm font-semibold">
-              <Link
-                href="/about"
-                className="text-blue-600 hover:text-blue-800"
-              >
+              <Link href="/about" className="text-blue-600 hover:text-blue-800">
                 About Us
               </Link>
 
-              <Link
-                href="/terms"
-                className="text-blue-600 hover:text-blue-800"
-              >
+              <Link href="/terms" className="text-blue-600 hover:text-blue-800">
                 Terms &amp; Conditions
               </Link>
 
@@ -452,15 +414,11 @@ export default function RefundPolicyPage() {
                 Privacy Policy
               </Link>
 
-              <Link
-                href="/"
-                className="text-blue-600 hover:text-blue-800"
-              >
+              <Link href="/" className="text-blue-600 hover:text-blue-800">
                 Back to Home
               </Link>
             </div>
           </div>
-
         </div>
       </section>
     </main>

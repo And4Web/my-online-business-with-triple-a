@@ -5,9 +5,9 @@ import FeaturedProjects from "./components/FeaturedProjects";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-20 text-white">
+    <main className="min-h-screen bg-slate-950 px-6 pt-4 pb-20 text-white">
       {/* Hero Section */}
-      <section className="relative mx-auto max-w-6xl overflow-hidden px-4 py-24 text-center sm:py-32">
+      <section className="relative mx-auto max-w-6xl overflow-hidden px-4 py-12 text-center sm:py-32">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute left-1/2 top-24 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-blue-600/20 blur-3xl"
@@ -15,7 +15,7 @@ export default function Home() {
 
         <div className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/80 px-4 py-2 text-sm font-medium text-slate-300">
           <span className="h-2 w-2 rounded-full bg-blue-400" />
-          Ready-made software projects
+          Ready-made software solutions
         </div>
 
         <h1 className="mt-8 text-5xl font-extrabold leading-tight tracking-tight sm:text-7xl">
@@ -26,9 +26,9 @@ export default function Home() {
         </h1>
 
         <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-400 sm:text-xl">
-          Explore ready-made full-stack software projects,
-          access source code, and find practical starting
-          points for your next digital product.
+          Explore original ready-made full-stack software,
+          purchase source code, and deploy your next digital
+          product with confidence.
         </p>
 
         <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
@@ -43,12 +43,12 @@ export default function Home() {
             href="#about"
             className="rounded-xl border border-slate-700 px-8 py-4 text-base font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-900"
           >
-            Discover Nexora
+            Discover And4Web
           </a>
         </div>
 
         <p className="mt-6 text-sm text-slate-500">
-          Ready-made source code · Practical solutions · Developer-focused
+          Original source code · Practical solutions · Developer-focused
         </p>
       </section>
 
@@ -61,7 +61,7 @@ export default function Home() {
           >
             <div className="mb-10">
               <p className="text-sm font-semibold uppercase tracking-widest text-blue-400">
-                The marketplace
+                Our software collection
               </p>
 
               <h2 className="mt-3 text-3xl font-bold sm:text-4xl">
@@ -78,14 +78,14 @@ export default function Home() {
         <FeaturedProjects />
       </Suspense>
 
-      {/* About Nexora */}
+      {/* About And4Web */}
       <section
         id="about"
         className="mx-auto max-w-6xl px-4 py-20"
       >
         <div className="rounded-3xl border border-slate-800 bg-slate-900/60 px-6 py-12 text-center sm:px-12">
           <p className="text-sm font-semibold uppercase tracking-widest text-blue-400">
-            About Nexora
+            About And4Web
           </p>
 
           <h2 className="mt-4 text-3xl font-bold sm:text-4xl">
@@ -93,18 +93,18 @@ export default function Home() {
           </h2>
 
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-400">
-            Nexora is a digital marketplace operated by
-            Divine flame IT Solutions. It is one of the
-            projects of our IT venture, created to make
-            ready-made software and full-stack source-code
-            projects accessible to developers, entrepreneurs,
-            and businesses.
+            And4Web is a software brand operated by
+            Divine Flame IT Solutions. The business develops
+            and offers its own original ready-made software
+            and full-stack source-code projects for developers,
+            entrepreneurs, and businesses.
           </p>
 
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-400">
-            Our focus is on offering practical software
-            starting points that help customers save
-            development time and move their ideas forward.
+            Customers can purchase source code and deploy
+            projects independently on their own hosting
+            infrastructure, or request an additional
+            deployment service.
           </p>
 
           <Link

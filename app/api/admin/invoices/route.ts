@@ -1,10 +1,12 @@
-import { NextResponse } from "next/server";
+import { connection, NextResponse } from "next/server";
 
 import dbConnect from "../../../lib/mongodb";
 import Invoice from "../../../lib/models/Invoice";
 import { requireAdmin } from "../../../lib/require-admin";
 
 export async function GET(request: Request) {
+  await connection();
+  
   try {
     // 1. Verify administrator access.
     const authError = await requireAdmin(request);

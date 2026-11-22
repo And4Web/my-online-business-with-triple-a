@@ -1,10 +1,11 @@
-
 "use client";
 
 import { useState, type FormEvent } from "react";
 
 export default function ContactPage() {
-  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "sending" | "success" | "error"
+  >("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -39,7 +40,7 @@ export default function ContactPage() {
 
       if (!response.ok || !result.success) {
         throw new Error(
-          result.message || "Unable to send your message. Please try again."
+          result.message || "Unable to send your message. Please try again.",
         );
       }
 
@@ -50,7 +51,7 @@ export default function ContactPage() {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Something went wrong. Please try again later."
+          : "Something went wrong. Please try again later.",
       );
     }
   }
@@ -58,11 +59,10 @@ export default function ContactPage() {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-16 text-white sm:py-24">
       <div className="mx-auto max-w-6xl">
-
         {/* Page heading */}
         <div className="text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-blue-400">
-            Contact Nexora
+            Contact And4Web
           </p>
 
           <h1 className="mt-4 text-4xl font-extrabold tracking-tight sm:text-6xl">
@@ -70,31 +70,27 @@ export default function ContactPage() {
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-400 sm:text-lg">
-            Have a question about our software projects, need help
-            with a purchase, or want to discuss deployment assistance?
-            We&apos;re here to help.
+            Have a question about our software projects, need help with a
+            purchase, or want to discuss deployment assistance? We&apos;re here
+            to help.
           </p>
         </div>
 
         {/* Main two-column layout */}
         <div className="mt-14 grid items-stretch gap-8 lg:grid-cols-5">
-
           {/* Left column: Business contact details */}
           <div className="flex h-full flex-col gap-6 lg:col-span-2">
-
             {/* Email support */}
             <div className="flex flex-1 flex-col rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-2xl">
                 ✉
               </div>
 
-              <h2 className="mt-5 text-xl font-bold">
-                Email support
-              </h2>
+              <h2 className="mt-5 text-xl font-bold">Email support</h2>
 
               <p className="mt-3 text-sm leading-6 text-slate-400">
-                For product questions, purchase inquiries, technical
-                assistance, or other business-related queries.
+                For product questions, purchase inquiries, technical assistance,
+                or other business-related queries.
               </p>
 
               <a
@@ -115,13 +111,11 @@ export default function ContactPage() {
                 ☎
               </div>
 
-              <h2 className="mt-5 text-xl font-bold">
-                Phone support
-              </h2>
+              <h2 className="mt-5 text-xl font-bold">Phone support</h2>
 
               <p className="mt-3 text-sm leading-6 text-slate-400">
-                You can reach our business using the official
-                contact number below.
+                You can reach our business using the official contact number
+                below.
               </p>
 
               <p className="mt-auto pt-5 text-sm font-medium text-blue-400">
@@ -135,16 +129,14 @@ export default function ContactPage() {
                 📍
               </div>
 
-              <h2 className="mt-5 text-xl font-bold">
-                Office address
-              </h2>
+              <h2 className="mt-5 text-xl font-bold">Office address</h2>
 
               <p className="mt-3 text-sm leading-6 text-slate-400">
                 Business correspondence and official communication:
               </p>
 
               <address className="mt-auto pt-5 not-italic text-sm leading-7 text-slate-300">
-                Divine flame IT Solutions
+                Divine Flame IT Solutions
                 <br />
                 XXXX
                 <br />
@@ -159,17 +151,12 @@ export default function ContactPage() {
 
           {/* Right column: Form and assistance */}
           <div className="flex h-full flex-col gap-8 lg:col-span-3">
-
             {/* Contact form */}
             <div className="flex-1 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 sm:p-8">
-              <h2 className="text-2xl font-bold">
-                Send us a message
-              </h2>
+              <h2 className="text-2xl font-bold">Send us a message</h2>
 
               <p className="mt-2 text-sm leading-6 text-slate-400">
-                Complete the form below with your inquiry.
-                Your message will be sent securely to our business
-                support team.
+                Complete the form below with your inquiry. Your message will be sent securely to Divine Flame IT Solutions.
               </p>
 
               {status === "success" ? (
@@ -182,10 +169,9 @@ export default function ContactPage() {
                   </h3>
 
                   <p className="mt-2 text-sm leading-6 text-slate-300">
-                    Thank you for contacting Nexora. Your enquiry
-                    has been submitted to our support team.
-                    We appreciate your interest and will get back
-                    to you as soon as possible.
+                    Thank you for contacting And4Web. Your enquiry has been
+                    submitted to our support team. We appreciate your interest
+                    and will get back to you as soon as possible.
                   </p>
 
                   <button
@@ -197,11 +183,7 @@ export default function ContactPage() {
                   </button>
                 </div>
               ) : (
-                <form
-                  onSubmit={handleSubmit}
-                  className="mt-8 space-y-5"
-                >
-
+                <form onSubmit={handleSubmit} className="mt-8 space-y-5">
                   {/* Name */}
                   <div>
                     <label
@@ -264,25 +246,17 @@ export default function ContactPage() {
                         Select a topic
                       </option>
 
-                      <option value="product">
-                        Product inquiry
-                      </option>
+                      <option value="product">Product inquiry</option>
 
                       <option value="purchase">
                         Purchase or download assistance
                       </option>
 
-                      <option value="deployment">
-                        Deployment assistance
-                      </option>
+                      <option value="deployment">Deployment assistance</option>
 
-                      <option value="business">
-                        Business inquiry
-                      </option>
+                      <option value="business">Business inquiry</option>
 
-                      <option value="other">
-                        Other question
-                      </option>
+                      <option value="other">Other question</option>
                     </select>
                   </div>
 
@@ -309,9 +283,7 @@ export default function ContactPage() {
 
                   {/* Hidden honeypot spam field */}
                   <div className="hidden" aria-hidden="true">
-                    <label htmlFor="website">
-                      Leave this field empty
-                    </label>
+                    <label htmlFor="website">Leave this field empty</label>
 
                     <input
                       id="website"
@@ -344,8 +316,8 @@ export default function ContactPage() {
                   </button>
 
                   <p className="text-xs leading-5 text-slate-500">
-                    Please do not include passwords, payment
-                    credentials, or other sensitive information.
+                    Please do not include passwords, payment credentials, or
+                    other sensitive information.
                   </p>
                 </form>
               )}
@@ -353,9 +325,7 @@ export default function ContactPage() {
 
             {/* How can we help? */}
             <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 sm:p-8">
-              <h2 className="text-xl font-bold">
-                How can we help?
-              </h2>
+              <h2 className="text-xl font-bold">How can we help?</h2>
 
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <div className="flex gap-3 text-sm leading-6 text-slate-300">
@@ -384,15 +354,13 @@ export default function ContactPage() {
 
         {/* Business identity */}
         <div className="mt-14 border-t border-slate-800 pt-8 text-center">
-          <p className="text-sm font-semibold text-slate-300">
-            Nexora
-          </p>
+          <p className="text-sm font-semibold text-slate-300">And4Web</p>
 
           <p className="mt-2 text-sm text-slate-500">
-            A digital marketplace operated by Divine flame IT Solutions.
+            An independent software development business operated by Divine
+            Flame IT Solutions.
           </p>
         </div>
-
       </div>
     </main>
   );

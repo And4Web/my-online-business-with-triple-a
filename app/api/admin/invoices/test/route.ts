@@ -373,7 +373,7 @@ export async function POST(request: Request) {
       transactionId: "DUMMY-LUT-EXPORT-TEST-2026",
     });
 
-    if (invoice.status !== "ready") {
+    if (invoice?.status !== "ready") {
       throw new Error("The dummy invoice PDF is not ready.");
     }
 

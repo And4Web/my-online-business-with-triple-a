@@ -19,6 +19,7 @@ export interface IProduct {
   color: string;
   features: string[];
   imageUrl?: string;
+  demoUrl?: string;
   status: "draft" | "coming-soon" | "active";
   downloadFile?: IProductDownloadFile;
 }
@@ -60,7 +61,7 @@ const downloadFileSchema = new Schema<IProductDownloadFile>(
   },
   {
     _id: false,
-  }
+  },
 );
 
 const productSchema = new Schema<IProduct>(
@@ -112,6 +113,11 @@ const productSchema = new Schema<IProduct>(
       trim: true,
       default: "",
     },
+    demoUrl: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     status: {
       type: String,
       enum: ["draft", "coming-soon", "active"],
@@ -126,11 +132,10 @@ const productSchema = new Schema<IProduct>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const Product =
-  mongoose.models.Product ||
-  mongoose.model<IProduct>("Product", productSchema);
+  mongoose.models.Product || mongoose.model<IProduct>("Product", productSchema);
 
 export default Product;

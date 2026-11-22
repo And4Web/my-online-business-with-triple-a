@@ -14,6 +14,7 @@ type Product = {
   color: string;
   features: string[];
   imageUrl?: string;
+  demoUrl?: string;
   status: "draft" | "coming-soon" | "active";
   downloadFile?: {
     fileName: string;
@@ -37,6 +38,7 @@ type ProductForm = {
   color: string;
   features: string;
   imageUrl: string;
+  demoUrl: string;
   status: "draft" | "coming-soon" | "active";
 };
 
@@ -50,6 +52,7 @@ const emptyForm: ProductForm = {
   color: "blue",
   features: "",
   imageUrl: "",
+  demoUrl: "",
   status: "draft",
 };
 
@@ -132,6 +135,7 @@ export default function ProductManagement({
       color: product.color,
       features: product.features.join("\n"),
       imageUrl: product.imageUrl || "",
+      demoUrl: product.demoUrl || "",
       status: product.status,
     });
 
@@ -170,6 +174,7 @@ export default function ProductManagement({
         .map((item) => item.trim())
         .filter(Boolean),
       imageUrl: form.imageUrl.trim(),
+      demoUrl: form.demoUrl.trim(),
       status: form.status,
     };
 
@@ -480,6 +485,28 @@ export default function ProductManagement({
 
               <p className="mt-2 text-xs text-slate-500">
                 Optional. Add a publicly accessible HTTPS image URL.
+              </p>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="mb-2 block text-sm text-slate-300">
+                Live Demo URL
+              </label>
+
+              <input
+                type="url"
+                maxLength={2048}
+                value={form.demoUrl}
+                onChange={(event) =>
+                  setForm({ ...form, demoUrl: event.target.value })
+                }
+                placeholder="https://my-project-demo.netlify.app"
+                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-blue-500"
+              />
+
+              <p className="mt-2 text-xs text-slate-500">
+                Optional. Add the live HTTPS URL of your deployed demo
+                application.
               </p>
             </div>
 

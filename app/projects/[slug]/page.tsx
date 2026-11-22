@@ -15,6 +15,19 @@ type ProjectDetailPageProps = {
   }>;
 };
 
+function getSafeDemoUrl(value: unknown): string {
+  if (typeof value !== "string" || !value.trim()) {
+    return "";
+  }
+
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:" ? url.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
 export async function generateMetadata({
   params,
 }: ProjectDetailPageProps): Promise<Metadata> {
@@ -71,7 +84,8 @@ export async function generateMetadata({
 
     return {
       title: "Project Details",
-      description: "Explore original ready-made software and full-stack source-code solutions at And4Web.",
+      description:
+        "Explore original ready-made software and full-stack source-code solutions at And4Web.",
     };
   }
 }
@@ -101,6 +115,7 @@ async function ProjectDetails({ slug }: { slug: string }) {
 
   const isAvailable = product.status === "active";
   const imageUrl = typeof product.imageUrl === "string" ? product.imageUrl : "";
+  const demoUrl = getSafeDemoUrl(product.demoUrl);
 
   return (
     <main className="min-h-screen bg-slate-950 px-5 py-12 text-white sm:px-6 sm:py-16">
@@ -269,6 +284,18 @@ async function ProjectDetails({ slug }: { slug: string }) {
               </li>
             </ul>
 
+            {demoUrl && (
+              <a
+                href={demoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-blue-500/40 bg-blue-500/10 px-5 py-3 font-semibold text-blue-300 transition hover:border-blue-400 hover:bg-blue-500/20 hover:text-white"
+              >
+                Live Demo
+                <span aria-hidden="true">↗</span>
+              </a>
+            )}
+
             {isAvailable ? (
               <div className="mt-8 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
                 <h3 className="font-semibold text-emerald-300">
@@ -310,7 +337,8 @@ async function ProjectDetails({ slug }: { slug: string }) {
 
         {/* Bottom Note */}
         <p className="mt-10 text-center text-xs leading-6 text-slate-600">
-          And4Web — Original ready-made software and source-code solutions for developers, entrepreneurs, and businesses.
+          And4Web — Original ready-made software and source-code solutions for
+          developers, entrepreneurs, and businesses.
         </p>
       </div>
     </main>

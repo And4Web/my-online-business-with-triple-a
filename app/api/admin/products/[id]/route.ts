@@ -32,6 +32,23 @@ function isValidImageUrl(value: unknown): boolean {
   }
 }
 
+function isValidDemoUrl(value: unknown): boolean {
+  if (typeof value !== "string" || value.length > 2048) {
+    return false;
+  }
+
+  if (value.trim() === "") {
+    return true;
+  }
+
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function isStringArray(value: unknown): value is string[] {
   return (
     Array.isArray(value) &&
@@ -97,6 +114,7 @@ export async function PUT(request: Request, context: RouteContext) {
       features,
       status,
       imageUrl,
+      demoUrl,
     } = data;
 
     // Validate required text fields.
@@ -229,6 +247,19 @@ export async function PUT(request: Request, context: RouteContext) {
     // Safely convert image URL to a string.
     const productImageUrl = typeof imageUrl === "string" ? imageUrl.trim() : "";
 
+    // Validate optional demo URL.
+    if (!isValidDemoUrl(demoUrl ?? "")) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Please provide a valid HTTPS demo URL.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const productDemoUrl = typeof demoUrl === "string" ? demoUrl.trim() : "";
+
     // Connect to database.
     await dbConnect();
 
@@ -246,6 +277,7 @@ export async function PUT(request: Request, context: RouteContext) {
         features: features.map((item) => item.trim()),
         status,
         imageUrl: productImageUrl,
+        demoUrl: productDemoUrl,
       },
       {
         new: true,
@@ -274,6 +306,7 @@ export async function PUT(request: Request, context: RouteContext) {
         price: updatedProduct.price,
         status: updatedProduct.status,
         imageUrl: updatedProduct.imageUrl ?? "",
+        demoUrl: updatedProduct.demoUrl ?? "",
       },
     });
   } catch (error: unknown) {

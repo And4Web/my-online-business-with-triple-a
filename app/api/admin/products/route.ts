@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 import dbConnect from "../../../lib/mongodb";
 import Product from "../../../lib/models/Product";
@@ -7,6 +6,23 @@ import { requireAdmin } from "../../../lib/require-admin";
 const allowedStatuses = ["draft", "coming-soon", "active"];
 
 function isValidImageUrl(value: unknown): value is string {
+  if (typeof value !== "string" || value.length > 2048) {
+    return false;
+  }
+
+  if (value.trim() === "") {
+    return true;
+  }
+
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function isValidDemoUrl(value: unknown): value is string {
   if (typeof value !== "string" || value.length > 2048) {
     return false;
   }
@@ -49,7 +65,7 @@ export async function GET(request: Request) {
         ok: false,
         message: "Unable to retrieve products.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -65,7 +81,7 @@ export async function POST(request: Request) {
     if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json(
         { ok: false, message: "Invalid product data." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -82,6 +98,7 @@ export async function POST(request: Request) {
       features,
       status,
       imageUrl,
+      demoUrl,
     } = data;
 
     // Validate required text fields.
@@ -101,7 +118,7 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         { ok: false, message: "Please provide valid product details." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -114,7 +131,7 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         { ok: false, message: "Price must be between $1 and $49." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -127,48 +144,58 @@ export async function POST(request: Request) {
         (item) =>
           typeof item === "string" &&
           item.trim().length > 0 &&
-          item.length <= 50
+          item.length <= 50,
       )
     ) {
       return NextResponse.json(
         { ok: false, message: "Please provide valid technologies." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Validate features.
     if (
       features !== undefined &&
-      (
-        !Array.isArray(features) ||
+      (!Array.isArray(features) ||
         features.length > 30 ||
         !features.every(
           (item) =>
             typeof item === "string" &&
             item.trim().length > 0 &&
-            item.length <= 200
-        )
-      )
+            item.length <= 200,
+        ))
     ) {
       return NextResponse.json(
         { ok: false, message: "Please provide valid features." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Validate image URL.
-if (!isValidImageUrl(imageUrl ?? "")) {
-  return NextResponse.json(
-    {
-      ok: false,
-      message: "Please provide a valid HTTPS image URL.",
-    },
-    { status: 400 }
-  );
-}
+    if (!isValidImageUrl(imageUrl ?? "")) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Please provide a valid HTTPS image URL.",
+        },
+        { status: 400 },
+      );
+    }
 
-const productImageUrl =
-  typeof imageUrl === "string" ? imageUrl.trim() : "";
+    const productImageUrl = typeof imageUrl === "string" ? imageUrl.trim() : "";
+
+    // Validate demoUrl
+    if (!isValidDemoUrl(demoUrl ?? "")) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Please provide a valid HTTPS demo URL.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const productDemoUrl = typeof demoUrl === "string" ? demoUrl.trim() : "";
 
     // Validate status.
     const productStatus = status ?? "draft";
@@ -179,7 +206,7 @@ const productImageUrl =
     ) {
       return NextResponse.json(
         { ok: false, message: "Invalid product status." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -192,7 +219,7 @@ const productImageUrl =
     ) {
       return NextResponse.json(
         { ok: false, message: "Invalid product color." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -209,6 +236,7 @@ const productImageUrl =
       features: (features ?? []).map((item: string) => item.trim()),
       status: productStatus,
       imageUrl: productImageUrl,
+      demoUrl: productDemoUrl,
     });
 
     return NextResponse.json(
@@ -223,9 +251,10 @@ const productImageUrl =
           price: product.price,
           status: product.status,
           imageUrl: product.imageUrl,
+          demoUrl: product.demoUrl,
         },
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     if (
@@ -236,7 +265,7 @@ const productImageUrl =
     ) {
       return NextResponse.json(
         { ok: false, message: "A product with this slug already exists." },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -244,7 +273,7 @@ const productImageUrl =
 
     return NextResponse.json(
       { ok: false, message: "Unable to create product." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
